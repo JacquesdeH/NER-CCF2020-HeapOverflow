@@ -15,7 +15,7 @@ class Estimators:
         self.labels=set()
         self.startPrintStatus()
         for i in range(len(self.fileset)):
-            df=pd.read_csv('./label/'+self.fileset[i]+'.csv')
+            df=pd.read_csv('../data/CCF/raw/train//label/'+self.fileset[i]+'.csv')
             self.labels|=set(df.Category.values)
             self.continuePrintStatus(i)
         self.endPrintStatus()
@@ -35,7 +35,7 @@ class Estimators:
                 self.coinCount[label][label0]=0
         self.startPrintStatus()
         for i in range(len(self.fileset)):
-            df=pd.read_csv('./label/'+self.fileset[i]+'.csv')
+            df=pd.read_csv('../data/CCF/raw/train//label/'+self.fileset[i]+'.csv')
             if True in set(df.Privacy.value_counts()>1):
                 self.potentialNoise.append(self.fileset[i])
                 continue
@@ -51,7 +51,7 @@ class Estimators:
                 for k in range(j+1,len(uni)):
                     self.coinCount[uni[j]][uni[k]]+=1
                     self.coinCount[uni[k]][uni[j]]+=1
-            with open('./data/'+self.fileset[i]+'.txt','r',encoding='utf8') as f:
+            with open('../data/CCF/raw/train//data/'+self.fileset[i]+'.txt','r',encoding='utf8') as f:
                 l=0
                 for j in f.readlines():
                     l+=len(j)
@@ -84,17 +84,18 @@ class Estimators:
         第三种计算二者出现向量的余弦相似度
         '''
         df=pd.DataFrame(self.coinCount)
-        _4sort=df.index.tolist()
+        #_4sort=df.index.tolist()
+        _4sort=['name','position','vx','QQ','email','mobile','movie','book','scene','game','government','address','organization','company']
         df.sort_values(by=_4sort,axis=1,inplace=True)
         df.sort_values(by=_4sort,axis=0,ascending=False,inplace=True)
         df=df.astype('float64')
         plt.figure()
-        sns.heatmap(data=df)
+        sns.heatmap(data=df,cmap='OrRd')
         for label0 in _4sort:
             for label1 in _4sort:
                 df[label0][label1]=df[label0][label1]/((len(self.entityLength4Label[label0])*len(self.entityLength4Label[label1]))**0.5)
         plt.figure()
-        sns.heatmap(data=df)
+        sns.heatmap(data=df,cmap='OrRd')
         sqrtL2=dict()
         for label in _4sort:
             sqrtL2[label]=sum(self.appearance[label])**0.5
@@ -107,14 +108,14 @@ class Estimators:
                     mulsum+=self.appearance[label0][i]*self.appearance[label1][i]
                 temp[label0][label1]=mulsum/sqrtL2[label0]/sqrtL2[label1]
         df=pd.DataFrame(temp)
-        df.sort_values(by=_4sort,axis=1,inplace=True,ascending=False)
-        df.sort_values(by=_4sort,axis=0,inplace=True)
+        df.sort_values(by=_4sort,axis=1,inplace=True)
+        df.sort_values(by=_4sort,axis=0,inplace=True,ascending=False)
         plt.figure()
-        sns.heatmap(data=df)
+        sns.heatmap(data=df,cmap='OrRd')
         for label in _4sort:
             df[label][label]=0
         plt.figure()
-        sns.heatmap(data=df)
+        sns.heatmap(data=df,cmap='OrRd')
         
     def showLabelDistribution(self):
         '''
@@ -152,5 +153,5 @@ if __name__=='__main__':
     es=Estimators(fileset)
     es.calculate()
     es.showSimilarity()
-    #es.showLabelDistribution()
-    #es.showFileLength()
+    es.showLabelDistribution()
+    es.showFileLength()
