@@ -11,6 +11,7 @@ class Logger:
     各个head参数都可以是str, 或者是拥有__name__属性的对象(如类名, 函数名).
     每条日志的格式为: [<time_stampe>]\\t@head\\t
     """
+
     def __init__(self, 
             log_file_name: str, 
             default_head: str or "__name__", 
@@ -35,15 +36,15 @@ class Logger:
         else:
             return signature.__name__
 
-    """
-    当 head 与 mid 为 None 时, 将使用创建本logger时指定的默认值, 若默认值仍为None, 则为空字符串
+    def log_message(self, *msg:"can to str", head:str or "__name__"=None, mid:str=None, end:str='\n'):     
+        """
+        当 head 与 mid 为 None 时, 将使用创建本logger时指定的默认值, 若默认值仍为None, 则为空字符串
 
-    @param *msg: 一列可以通过str()转换为字符串的对象, 将通过mid属性连接;
-    @param head: 头部, 以 @xxx 形式添加到时间戳之后, head需要是一个字符串或者拥有__name__属性的对象;
-    @param mid: 连接 msg 各个内容的连接符;
-    @param end: 结尾的符号, 仅对console内容有效, 写入日志文件时必定以回车结尾;
-    """
-    def log_message(self, *msg:"can to str", head:str or "__name__"=None, mid:str=None, end:str='\n'):
+        @param *msg: 一列可以通过str()转换为字符串的对象, 将通过mid属性连接;
+        @param head: 头部, 以 @xxx 形式添加到时间戳之后, head需要是一个字符串或者拥有__name__属性的对象;
+        @param mid: 连接 msg 各个内容的连接符;
+        @param end: 结尾的符号, 仅对console内容有效, 写入日志文件时必定以回车结尾;
+        """
         time_stampe = self.get_time_stampe()
         total_msg = '[' + time_stampe + ']\t'
         if head != None:
@@ -62,12 +63,12 @@ class Logger:
 
 _default_logger = None
 
-"""
-创建一个Logger.
-当log_file_name为空时, 将返回默认的logger, 该logger只有一个实例.
-log_file_name 是相对于 log 文件夹的目录
-"""
 def alloc_logger(log_file_name: str=None, default_head: str or "__name__"=None, default_mid:str='',console_output:bool=True):
+    """
+    创建一个Logger.
+    当log_file_name为空时, 将返回默认的logger, 该logger只有一个实例.
+    log_file_name 是相对于 log 文件夹的目录
+    """
     global _default_logger
     if log_file_name == None:
         if _default_logger is None:
@@ -78,11 +79,11 @@ def alloc_logger(log_file_name: str=None, default_head: str or "__name__"=None, 
             _default_logger = Logger(log_file_name, signature, mid, need_console)
         return _default_logger
     return Logger(log_file_name, default_head, default_mid, console_output)
-        
-"""
-代理默认logger的log_message.
-"""
-def log_message(*msg:"can to str", head:str or "__name__"=None, mid:str=None, end:str='\n'):
+     
+def log_message(*msg:"can to str", head:str or "__name__"=None, mid:str=None, end:str='\n'):   
+    """
+    代理默认logger的log_message.
+    """
     alloc_logger().log_message(*msg, head=head, mid=mid, end=end)
 
 if __name__ == "__main__":
