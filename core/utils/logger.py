@@ -33,6 +33,14 @@ class Logger:
         else:
             return signature.__name__
 
+    """
+    当 head 与 mid 为 None 时, 将使用创建本logger时指定的默认值, 若默认值仍为None, 则为空字符串
+
+    @param *msg: 一列可以通过str()转换为字符串的对象, 将通过mid属性连接;
+    @param head: 头部, 以 @xxx 形式添加到时间戳之后, head需要是一个字符串或者拥有__name__属性的对象;
+    @param mid: 连接 msg 各个内容的连接符;
+    @param end: 结尾的符号, 仅对console内容有效, 写入日志文件时必定以回车结尾;
+    """
     def log_message(self, *msg:"can to str", head:str or "__name__"=None, mid:str=None, end:str='\n'):
         time_stampe = self.get_time_stampe()
         total_msg = '[' + time_stampe + ']\t'
@@ -45,10 +53,10 @@ class Logger:
             content = self._default_mid.join(str(m) for m in msg)
         else:
             content = mid.join(str(m) for m in msg)
-        total_msg += content + end
+        total_msg += content
         if self.console_output:
-            print(total_msg, end='')
-        self.log_file.write(total_msg)
+            print(total_msg, end=end)
+        self.log_file.write(total_msg + '\n')
 
 """
 获取Main.py所在目录
@@ -63,7 +71,7 @@ _default_logger = None
 
 """
 创建一个Logger.
-当log_file_name
+当log_file_name为空时, 将返回默认的logger, 该logger只有一个实例.
 """
 def alloc_logger(log_file_name: str=None, default_head: str or "__name__"=None, default_mid:str='',console_output:bool=True):
     global _default_logger
@@ -80,9 +88,15 @@ def alloc_logger(log_file_name: str=None, default_head: str or "__name__"=None, 
         return _default_logger
     return Logger(log_file_name, default_head, default_mid, console_output)
         
-
+"""
+代理默认logger的log_message.
+"""
+def log_message(*msg:"can to str", head:str or "__name__"=None, mid:str=None, end:str='\n'):
+    alloc_logger().log_message(*msg, head=head, mid=mid, end=end)
 
 if __name__ == "__main__":
+    log_message("test", "default", "log_message", mid=' ')
+    log_message(1, 2, 3, 4, (1,2), mid='\t')
     logger1 = alloc_logger()
     logger1.log_message("test logger")
     logger1.log_message("test string signature", head=__file__)
