@@ -1,6 +1,0 @@
-{
-    "default_logfile_dir" : "log/default.log",
-    "default_head" : "",
-    "default_mid" : "",
-    "default_need_console" : "true"
-}

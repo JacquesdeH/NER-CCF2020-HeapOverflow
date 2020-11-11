@@ -13,3 +13,9 @@ class DefaultConfig:
 
     class HYPER:
         BATCH_SIZE = 32
+
+    class LOG:
+        DEFAULT_LOG_DIR = "default.log"
+        DEFAULT_HEAD = ''
+        DEFAULT_MID = ''
+        DEFAULT_NEED_CONSOLE = True

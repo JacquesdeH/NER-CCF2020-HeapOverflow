@@ -2,6 +2,8 @@ import time
 import sys
 import os
 import json
+from ..config.DefaultConfig import DefaultConfig
+
 
 class Logger:
     """
@@ -14,13 +16,13 @@ class Logger:
             default_head: str or "__name__", 
             default_mid: str, 
             console_output: bool):
-        self.log_file = open(log_file_name, 'a', encoding='utf8')
+        self._log_file = open(DefaultConfig.PATHS.LOG + '/' + log_file_name, 'a', encoding='utf8')
         self.console_output = console_output
         self._default_mid = default_mid
         self._default_signature = self.format_signature(default_head) if default_head is not None else None
 
     def __del__(self):
-        self.log_file.close()
+        self._log_file.close()
     
     @staticmethod
     def get_time_stampe():
@@ -56,34 +58,23 @@ class Logger:
         total_msg += content
         if self.console_output:
             print(total_msg, end=end)
-        self.log_file.write(total_msg + '\n')
-
-"""
-获取Main.py所在目录
-"""
-def get_top_dir():
-    tmp = os.path.abspath(__file__)
-    for _ in range(3):
-        tmp = os.path.dirname(tmp)
-    return tmp
+        self._log_file.write(total_msg + '\n')
 
 _default_logger = None
 
 """
 创建一个Logger.
 当log_file_name为空时, 将返回默认的logger, 该logger只有一个实例.
+log_file_name 是相对于 log 文件夹的目录
 """
 def alloc_logger(log_file_name: str=None, default_head: str or "__name__"=None, default_mid:str='',console_output:bool=True):
     global _default_logger
     if log_file_name == None:
         if _default_logger is None:
-            setting_file_name = os.path.dirname(os.path.abspath(__file__)) + "/default_logger_setting.json"
-            with open(setting_file_name, 'r', encoding='utf8') as f:
-                setting = json.load(f)
-            log_file_name = get_top_dir() + '/' + setting["default_logfile_dir"]
-            signature = setting["default_head"]
-            mid = setting["default_mid"]
-            need_console = True if setting["default_need_console"] == "true" else False
+            log_file_name = DefaultConfig.LOG.DEFAULT_LOG_DIR
+            signature = DefaultConfig.LOG.DEFAULT_HEAD
+            mid = DefaultConfig.LOG.DEFAULT_MID
+            need_console = DefaultConfig.LOG.DEFAULT_NEED_CONSOLE
             _default_logger = Logger(log_file_name, signature, mid, need_console)
         return _default_logger
     return Logger(log_file_name, default_head, default_mid, console_output)
@@ -95,6 +86,7 @@ def log_message(*msg:"can to str", head:str or "__name__"=None, mid:str=None, en
     alloc_logger().log_message(*msg, head=head, mid=mid, end=end)
 
 if __name__ == "__main__":
+    print(DefaultConfig.PATHS.LOG)
     log_message("test", "default", "log_message", mid=' ')
     log_message(1, 2, 3, 4, (1,2), mid='\t')
     logger1 = alloc_logger()

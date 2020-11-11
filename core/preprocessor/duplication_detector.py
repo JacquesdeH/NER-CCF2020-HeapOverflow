@@ -7,3 +7,5 @@ class DuplicationDetector:
         self.duplication_list = []  # list of tuple
 
     def detect(self):
+        # TODO
+        pass
