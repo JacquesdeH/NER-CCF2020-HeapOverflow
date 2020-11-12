@@ -9,7 +9,7 @@ class Logger:
     """
     日志类.
     各个head参数都可以是str, 或者是拥有__name__属性的对象(如类名, 函数名).
-    每条日志的格式为: [<time_stampe>]\\t@head\\t
+    每条日志的格式为: [<time_stampe>]\\t@head\\tq
     """
 
     def __init__(self, 
@@ -36,14 +36,14 @@ class Logger:
         else:
             return signature.__name__
 
-    def log_message(self, *msg:"can to str", head:str or "__name__"=None, mid:str=None, end:str='\n'):     
+    def format_msg(self, *msg:"can to str", head:str or "__name__"=None, mid:str=None, end:str='\n'):
         """
-        当 head 与 mid 为 None 时, 将使用创建本logger时指定的默认值, 若默认值仍为None, 则为空字符串
+        当 head 与 mid 为 None 时, 将使用创建本logger时指定的默认值, 若默认值仍为None, 则为空字符串.
+        不会在结尾添加 '\\n'.
 
         @param *msg: 一列可以通过str()转换为字符串的对象, 将通过mid属性连接;
         @param head: 头部, 以 @xxx 形式添加到时间戳之后, head需要是一个字符串或者拥有__name__属性的对象;
         @param mid: 连接 msg 各个内容的连接符;
-        @param end: 结尾的符号, 仅对console内容有效, 写入日志文件时必定以回车结尾;
         """
         time_stampe = self.get_time_stampe()
         total_msg = '[' + time_stampe + ']\t'
@@ -57,6 +57,48 @@ class Logger:
         else:
             content = mid.join(str(m) for m in msg)
         total_msg += content
+        return total_msg
+
+    def console_message(self, *msg:"can to str", head:str or "__name__"=None, mid:str=None, end:str='\n'):
+        """
+        向stdout输出信息.
+        将转发 msg, head, mid 至 format_msg() 函数进行格式化, 具体如下:
+        当 head 与 mid 为 None 时, 将使用创建本logger时指定的默认值, 若默认值仍为None, 则为空字符串
+
+        @param *msg: 一列可以通过str()转换为字符串的对象, 将通过mid属性连接;
+        @param head: 头部, 以 @xxx 形式添加到时间戳之后, head需要是一个字符串或者拥有__name__属性的对象;
+        @param mid: 连接 msg 各个内容的连接符;
+        @param end: 结尾的符号, 仅对console内容有效, 写入日志文件时必定以回车结尾;
+        """
+        total_msg = self.format_msg(*msg, head=head, mid=mid)
+        print(total_msg, end=end)
+
+    def file_message(self, *msg:"can to str", head:str or "__name__"=None, mid:str=None):
+        """
+        向日志文件写入信息.
+        将转发 msg, head, mid 至 format_msg() 函数进行格式化, 具体如下:
+        当 head 与 mid 为 None 时, 将使用创建本logger时指定的默认值, 若默认值仍为None, 则为空字符串
+
+        @param *msg: 一列可以通过str()转换为字符串的对象, 将通过mid属性连接;
+        @param head: 头部, 以 @xxx 形式添加到时间戳之后, head需要是一个字符串或者拥有__name__属性的对象;
+        @param mid: 连接 msg 各个内容的连接符;
+        @param end: 结尾的符号, 仅对console内容有效, 写入日志文件时必定以回车结尾;
+        """
+        total_msg = self.format_msg(*msg, head=head, mid=mid)
+        self._log_file.write(total_msg + '\n')
+
+    def log_message(self, *msg:"can to str", head:str or "__name__"=None, mid:str=None, end:str='\n'):     
+        """
+        向日志文件写入信息, 如果创建Logger时console_output为True, 则同时向stdout输出相同的信息.
+        将转发 msg, head, mid 至 format_msg() 函数进行格式化, 具体如下:
+        当 head 与 mid 为 None 时, 将使用创建本logger时指定的默认值, 若默认值仍为None, 则为空字符串
+
+        @param *msg: 一列可以通过str()转换为字符串的对象, 将通过mid属性连接;
+        @param head: 头部, 以 @xxx 形式添加到时间戳之后, head需要是一个字符串或者拥有__name__属性的对象;
+        @param mid: 连接 msg 各个内容的连接符;
+        @param end: 结尾的符号, 仅对console内容有效, 写入日志文件时必定以回车结尾;
+        """
+        total_msg = self.format_msg(*msg, head=head, mid=mid)
         if self.console_output:
             print(total_msg, end=end)
         self._log_file.write(total_msg + '\n')
@@ -85,6 +127,19 @@ def log_message(*msg:"can to str", head:str or "__name__"=None, mid:str=None, en
     代理默认logger的log_message.
     """
     alloc_logger().log_message(*msg, head=head, mid=mid, end=end)
+
+def file_message(*msg:"can to str", head:str or "__name__"=None, mid:str=None):
+    """
+    file_message.
+    """
+    alloc_logger().file_message(*msg, head=head, mid=mid)
+
+def console_message(*msg:"can to str", head:str or "__name__"=None, mid:str=None, end:str='\n'):
+    """
+    代理默认logger的console_message.
+    """
+    alloc_logger().console_message(*msg, head=head, mid=mid, end=end)
+
 
 if __name__ == "__main__":
     print(DefaultConfig.PATHS.LOG)
