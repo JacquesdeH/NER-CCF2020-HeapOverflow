@@ -26,8 +26,9 @@ class DuplicationDetector:
                 with open(label_file_name, 'r', encoding='utf8') as f:
                     infos = reader.load(f)
                 infos.sort(key=lambda info: info.Pos_b)
+                print(infos)
                 for j in range(len(infos) - 1):
-                    if infos[j].Pos_e >= infos[j].Pos_b:
+                    if infos[j].Pos_e >= infos[j + 1].Pos_b:
                         self.logger.log_message("detect():\t", "detect duplication with id={:d}".format(infos[j].ID))
                         dup_count += 1
                         dupfile.write("---\n\n")
@@ -38,7 +39,8 @@ class DuplicationDetector:
                         dupfile.write(txt + '\n\n')
                         dupfile.write("- [] [{:d}:{:d}]\t<{:s}>\t{:s}\n\n".format(infos[j].Pos_b, infos[j].Pos_e, infos[j].Category, infos[j].Privacy) )
                         dupfile.write("- [] [{:d}:{:d}]\t<{:s}>\t{:s}\n\n".format(infos[j+1].Pos_b, infos[j+1].Pos_e, infos[j+1].Category, infos[j+1].Privacy))
-
+                # break
+            self.logger.log_message("detect():\t", "detect ", dup_count, " duplications")
 
         
         
