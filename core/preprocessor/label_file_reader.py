@@ -12,14 +12,14 @@ Pos_b: int
 Pos_e: int
 Provacy: str
 """
-label_info = namedtuple("LabelInfo", ["ID", "Category", "Pos_b", "Pos_e", "Privacy"])
+LabelInfo = namedtuple("LabelInfo", ["ID", "Category", "Pos_b", "Pos_e", "Privacy"])
 
 class LabelFileReader:
     def __init__(self):
         self.csv_re = re.compile(r"^(\d+),(\w+),(\d+),(\d+),(.+)$")
         self.logger = alloc_logger("label_file_reader.log", default_head=LabelFileReader)
     
-    def loads(self, line_content) -> label_info:
+    def loads(self, line_content) -> LabelInfo:
         m = self.csv_re.match(line_content)
         if m == None:
             self.logger.log_message("content cannot match pattern:", line_content)
@@ -29,7 +29,7 @@ class LabelFileReader:
         Pos_b = int(m.group(3))
         Pos_e = int(m.group(4))
         Privacy = m.group(5)
-        ret = label_info(
+        ret = LabelInfo(
             ID = ID,
             Category = Category,
             Pos_b = Pos_b,
@@ -39,7 +39,7 @@ class LabelFileReader:
         return ret
 
 
-    def load(self, file_name: str) -> list or "List<LabelInfo>":
+    def load(self, file_name: str) -> "List[LabelInfo]":
         ret = []
         with open(file_name, 'r', encoding='utf8') as f:
             for row, line_content in enumerate(f.readlines()):
@@ -51,11 +51,19 @@ class LabelFileReader:
         self.logger.log_message(ret)
         return ret
                 
-    def dumps(self, info: label_info):
+    def dumps(self, info: LabelInfo):
         return str(info.ID) + ',' + info.Category + ',' + str(info.Pos_b) + ',' + str(info.Pos_e) + ',' + info.Privacy
 
+    def dump(self, infos : "List[LabelInfo]", fp):
+        header = "ID,Category,Pos_b,Pos_e,Privacy"
+        fp.write(header + '\n')
+        for info in infos:
+            fp.write(self.dumps(info) + '\n')
 
 if __name__ == "__main__":
     reader = LabelFileReader()
     infos = reader.load(DefaultConfig.PATHS.DATA_CCF_RAW + "/train/label/0.csv")
     print(reader.dumps(infos[0]))
+    with open("label_file_reader.debug", 'w', encoding='utf8') as f:
+       reader.dump(infos, f)
+    
