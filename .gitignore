@@ -2,5 +2,4 @@
 __pycache__/
 .gitignore
 *.debug
-data/CCF/formatted/label/*.json
-data/CCF/duplication_cleaned/auto_cleaned/*.csv
+data/CCF/debug/*

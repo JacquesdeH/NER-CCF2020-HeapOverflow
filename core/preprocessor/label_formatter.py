@@ -22,7 +22,8 @@ class LabelFormatter:
         self.logger.log_message("target_dir=", self.target_dir)
         self.logger.log_message("end - - - - - - - - - - - - - - - - - - - - -")
 
-    def format(self, infos: "List[LabelInfo]", length: int) -> "List[str]":
+    @staticmethod
+    def format(infos: "List[LabelInfo]", length: int) -> "List[str]":
         lst = ["O"] * length
         for info in infos:
             type_name = info.Category
@@ -67,7 +68,7 @@ class LabelFormatter:
 if __name__ == "__main__":
     formatter = LabelFormatter(
         data_dir=None,
-        label_dir=DefaultConfig.PATHS.DATA_CCF_DUP_CLN + "/auto_cleaned",
+        label_dir=DefaultConfig.PATHS.DATA_CCF_DBG + "/duplication_cleaned",
         target_dir=None,
         console_output=True
     )

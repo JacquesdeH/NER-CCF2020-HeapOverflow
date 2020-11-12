@@ -11,11 +11,10 @@ class DefaultConfig:
         DATA_CCF = os.path.join(DATA, os.path.join("CCF"))
         DATA_CCF_RAW = os.path.join(DATA_CCF, os.path.join("raw"))
 
-        # 存放重复标签信息的文件的路径
-        DATA_CCF_DUP = os.path.join(DATA_CCF, os.path.join("duplication_cleaned"))
+        # 用于debug时存放输出文件的路径，强烈建议gitignore
+        DATA_CCF_DBG = os.path.join(DATA_CCF, os.path.join("debug"))
 
-        # 存放消除重复标签后的标签文件的路径
-        DATA_CCF_DUP_CLN = os.path.join(DATA_CCF, os.path.join("duplication_cleaned"))
+        DATA_INFO = os.path.join(DATA, os.path.join("info"))
 
         # 存放格式化标签的路径
         DATA_CCF_FMT = os.path.join(DATA_CCF, os.path.join("formatted"))
