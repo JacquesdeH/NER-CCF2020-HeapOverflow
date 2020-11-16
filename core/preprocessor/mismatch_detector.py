@@ -31,7 +31,6 @@ class MismatchDetector:
         with open(self.mismatch_file_dir + "/mismatch_tactics.json", 'r', encoding='utf8') as f:
             self.tactics = json.load(f)         
 
-
     def __del__(self):
         with open(self.mismatch_file_dir + "/mismatch_tactics.json", 'w', encoding='utf8') as f:
             json.dump(self.tactics, f)
@@ -73,8 +72,8 @@ if __name__ == "__main__":
     reader = LabelFileReader()
     detector = MismatchDetector()
 
-    data_dir = DefaultConfig.PATHS.DATA_CCF_RAW + '/data'
-    label_dir = DefaultConfig.PATHS.DATA_CCF_RAW + '/label'
+    data_dir = DefaultConfig.PATHS.DATA_CCF_RAW + '/train/data'
+    label_dir = DefaultConfig.PATHS.DATA_CCF_RAW + '/train/label'
 
     data_count = len(os.listdir(data_dir))
 
