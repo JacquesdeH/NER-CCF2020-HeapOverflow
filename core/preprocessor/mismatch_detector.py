@@ -31,14 +31,17 @@ class MismatchDetector:
         with open(self.mismatch_file_dir + "/mismatch_tactics.json", 'r', encoding='utf8') as f:
             self.tactics = json.load(f)         
 
-    def __del__(self):
+    def save(self):
         with open(self.mismatch_file_dir + "/mismatch_tactics.json", 'w', encoding='utf8') as f:
-            json.dump(self.tactics, f)
+            json.dump(self.tactics, f, ensure_ascii=False)
+
+    # def __del__(self):
+    #    self.save()
 
     def fix_mismatch(self, data:str, infos:"List[LabelInfo]") -> (str, "List[LabelInfo]"):
         new_data = data.replace('\n', '')
         reader = LabelFileReader()
-        for info in infos:
+        for no, info in enumerate(infos):
             if new_data[info.Pos_b : info.Pos_e + 1] != info.Privacy:
                 self.mismatch_count += 1
                 if info.ID in self.tactics.keys():
@@ -61,7 +64,8 @@ class MismatchDetector:
                     msg = {
                         "solved": "false",
                         "data" : new_data,
-                        "labels" : infos
+                        "labels" : infos,
+                        "no" : no
                     }
                     self.tactics[info.ID] = msg
                     return (None, None)
@@ -84,4 +88,4 @@ if __name__ == "__main__":
             infos = reader.load(f)
         detector.fix_mismatch(data, infos)
 
-
+    detector.save()
