@@ -34,6 +34,7 @@ class CCFDataset(tud.Dataset):
     data_content: str
     label_content: torch.Tensor with dtype = torch.long
     '''
+    # FIXME: force length to SEQ_LEN now use config,
     def __getitem__(self, idx):
         if idx > self.file_num:
             return
@@ -41,8 +42,13 @@ class CCFDataset(tud.Dataset):
             data_content = f_data.read()
         if self.in_train:
             with open(self.label + '/' + self.label_file_list[idx], encoding="utf8") as f_label:
-                label_content = torch.LongTensor(json.load(f_label))
-                return data_content,label_content
+                label_list = json.load(f_label)
+                if len(label_list) >= DefaultConfig.HYPER.SEQ_LEN:
+                    label_list = label_list[:DefaultConfig.HYPER.SEQ_LEN]
+                else:
+                    label_list += [0 for count in range(DefaultConfig.HYPER.SEQ_LEN - len(label_list))]
+                label_content = torch.LongTensor(label_list)
+                return data_content, label_content
         else:
             return data_content
 
@@ -70,8 +76,9 @@ class CCFDataloader:
             for count in range(ret_size):
                 data_content, label_content = self.dataset[idx * self.batch_size + count]
                 data_contents.append(data_content)
-                if isinstance(label_contents,torch.Tensor):
-                    label_contents = torch.stack((label_contents, label_content))
+                label_content.unsqueeze_(0)
+                if isinstance(label_contents, torch.Tensor):
+                    label_contents = torch.cat((label_contents, label_content))
                 else:
                     label_contents = label_content
             return data_contents, label_contents
@@ -85,7 +92,7 @@ class CCFDataloader:
 
 if __name__ == "__main__":
     ccf_dataloader = CCFDataloader(in_train=True)
-    for i, data_contents, label_contents in enumerate(ccf_dataloader):
+    for i, (data_contents, label_contents) in enumerate(ccf_dataloader):
         if i == 5:
             break
         print("=============BATCH %d=============" % i)
