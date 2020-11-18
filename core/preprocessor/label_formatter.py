@@ -4,6 +4,10 @@ from ..config.DefaultConfig import DefaultConfig
 from .label_file_reader import LabelFileReader
 from .label_file_reader import LabelInfo
 from ..utils import alloc_logger
+from .label_transformer import BMESOLabel
+from .label_transformer import LabelType
+from .label_transformer import LabelTrasformer
+
 
 class LabelFormatter:
     def __init__(self,
@@ -21,9 +25,40 @@ class LabelFormatter:
         self.logger.log_message("label_dir=", self.label_dir)
         self.logger.log_message("target_dir=", self.target_dir)
         self.logger.log_message("end - - - - - - - - - - - - - - - - - - - - -")
+        self.transformer = None
+
+
+    def fit(self) -> LabelTrasformer:
+        origin_data_count = len(os.listdir(self.label_dir))
+        self.logger.log_message("fit():", "label file count:\t", origin_data_count)
+        reader = LabelFileReader()
+        label_set = set()       # set[BMESOLabel]
+        label_set.add(LabelTrasformer.LABEL_O)
+
+        for i in range(origin_data_count):
+            with open(self.label_dir + "/{:d}.csv".format(i), 'r', encoding='utf8') as f:
+                infos = reader.load(f)
+
+            for info in infos:
+                type_name = info.Category
+                start_index = info.Pos_b
+                end_index = info.Pos_e
+                if end_index - start_index > 1:
+                    label_set.add(BMESOLabel(type_name, LabelType.B))
+                    label_set.add(BMESOLabel(type_name, LabelType.I))
+                    label_set.add(BMESOLabel(type_name, LabelType.E))
+                elif start_index == end_index:   
+                    label_set.add(BMESOLabel(type_name, LabelType.S))
+                else:
+                    label_set.add(BMESOLabel(type_name, LabelType.B))
+                    label_set.add(BMESOLabel(type_name, LabelType.E))
+
+        self.transformer = LabelTrasformer(label_set)
+        return self.transformer
+                    
 
     def infos_to_integer_list_label(self, infos: "Iterable[LabelInfo]", length: int) -> "List[int]":
-        lst = ["O"] * length
+        lst = [0] * length
         for info in infos:
             type_name = info.Category
             start_index = info.Pos_b
@@ -31,17 +66,17 @@ class LabelFormatter:
 
             # 单字
             if start_index == end_index:           
-                lst[start_index] = "S-" + type_name     # 标记单字短语
+                lst[start_index] = self.transformer.label_to_integer(BMESOLabel(type_name, LabelType.S))     # 标记单字短语
                 continue
 
             # 多字
-            m_sym = "M-" + type_name            # 名词短语中间的标记
+            m_sym = BMESOLabel(type_name, LabelType.M)            # 名词短语中间的标记
             for i in range(start_index, end_index + 1):
                 if i == start_index:
-                    lst[i] = "B-" + type_name   # 标记名词短语的开头
+                    lst[i] = self.transformer.label_to_integer(BMESOLabel(type_name, LabelType.B))   # 标记名词短语的开头
                     continue
                 if i == end_index:
-                    lst[i] = "E-" + type_name   # 标记名词短语的结尾
+                    lst[i] = self.transformer.label_to_integer(BMESOLabel(type_name, LabelType.E))   # 标记名词短语的结尾
                     continue
                 lst[i] = m_sym                  # 标记名词短语的中间部分
         return lst
