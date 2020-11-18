@@ -22,8 +22,11 @@ class LabelFormatter:
         self.logger.log_message("target_dir=", self.target_dir)
         self.logger.log_message("end - - - - - - - - - - - - - - - - - - - - -")
 
-    @staticmethod
-    def format(infos: "Iterable[LabelInfo]", length: int) -> "List[str]":
+    def infos_to_integer_list_label(self, infos: "Iterable[LabelInfo]", length: int) -> "List[int]":
+        # TODO
+        pass
+
+    def infos_to_str_list_label(self, infos: "Iterable[LabelInfo]", length: int) -> "List[str]":
         lst = ["O"] * length
         for info in infos:
             type_name = info.Category
@@ -58,7 +61,7 @@ class LabelFormatter:
             with open(self.data_dir + "/{:d}.txt".format(i), 'r', encoding='utf8') as f:
                 length = len(f.read())
 
-            lst = self.format(infos, length)
+            lst = self.infos_to_str_list_label(infos, length)
 
             # 保存标记列表
             with open(self.target_dir + "/{:d}.json".format(i), 'w', encoding='utf8') as f:
