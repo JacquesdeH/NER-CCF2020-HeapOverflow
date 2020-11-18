@@ -10,6 +10,7 @@ class DefaultConfig:
         DATA = os.path.join("data")
         DATA_CCF = os.path.join(DATA, os.path.join("CCF"))
         DATA_CCF_RAW = os.path.join(DATA_CCF, os.path.join("raw"))
+        DATA_CCF_CLEANED = os.path.join(DATA_CCF, os.path.join("cleaned"))
 
         # 用于debug时存放输出文件的路径，强烈建议gitignore
         DATA_CCF_DBG = os.path.join(DATA_CCF, os.path.join("debug"))
