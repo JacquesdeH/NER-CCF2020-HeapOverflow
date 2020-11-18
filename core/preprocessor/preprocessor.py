@@ -4,6 +4,7 @@ from .duplication_detector import DuplicationDetector
 from .label_file_reader import LabelFileReader
 from .label_formatter import LabelFormatter
 from .mismatch_detector import MismatchDetector
+from .label_transformer import LabelTrasformer
 import os
 import json
 
@@ -84,7 +85,7 @@ class Preprocessor:
                 f.write(data)
         self.logger.log_message(signature, "finish!")
 
-def quick_preproduce():
+def quick_preproduce() -> LabelTrasformer:
     logger = alloc_logger()
     try:
         new_dir = DefaultConfig.PATHS.DATA_CCF_CLEANED + "/test/data"
@@ -113,6 +114,7 @@ def quick_preproduce():
     preprocessor = Preprocessor()
     preprocessor.produce_train()
     preprocessor.produce_test()
+    return preprocessor.trasformer
 
 if __name__ == "__main__":
     quick_preproduce()
