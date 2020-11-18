@@ -6,6 +6,19 @@ import json
 from ..utils import alloc_logger
 
 
+class Iterator:
+    def __init__(self, target):
+        self.target = target
+        self.index = -1
+
+    def __next__(self):
+        try:
+            self.index += 1
+            return self.target[self.index]
+        except IndexError:
+            raise StopIteration
+
+
 class CCFDataset(tud.Dataset):
     def __init__(self, in_train=True):
         super().__init__()
@@ -36,8 +49,8 @@ class CCFDataset(tud.Dataset):
     '''
     # FIXME: force length to SEQ_LEN now use config,
     def __getitem__(self, idx):
-        if idx > self.file_num:
-            return
+        if idx >= len(self):
+            raise IndexError
         with open(self.data + '/' + self.data_file_list[idx], encoding="UTF-8") as f_data:
             data_content = f_data.read()
         if self.in_train:
@@ -66,7 +79,12 @@ class CCFDataloader:
     def __len__(self):
         return self.file_num // self.batch_size + (0 if self.file_num % self.batch_size == 0 else 1)
 
+    def __iter__(self):
+        return Iterator(self)
+
     def __getitem__(self, idx):
+        if idx >= len(self):
+            raise IndexError
         ret_size = self.batch_size
         if idx == len(self) - 1:
             ret_size = self.file_num % self.batch_size
@@ -93,8 +111,8 @@ class CCFDataloader:
 if __name__ == "__main__":
     ccf_dataloader = CCFDataloader(in_train=True)
     for i, (data_contents, label_contents) in enumerate(ccf_dataloader):
-        if i == 5:
-            break
+        #if i == 5:
+        #    break
         print("=============BATCH %d=============" % i)
         print(data_contents)
-        print(label_contents) 
+        print(label_contents)
