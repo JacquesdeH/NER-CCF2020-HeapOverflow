@@ -28,15 +28,16 @@ class LabelFormatter:
         self.transformer = None
 
 
-    def fit(self) -> LabelTrasformer:
-        origin_data_count = len(os.listdir(self.label_dir))
+    def fit(self, label_dir: str=None) -> LabelTrasformer:
+        label_dir = label_dir if label_dir is not None else self.label_dir
+        origin_data_count = len(os.listdir(label_dir))
         self.logger.log_message("fit():", "label file count:\t", origin_data_count)
         reader = LabelFileReader()
         label_set = set()       # set[BMESOLabel]
-        label_set.add(LabelTrasformer.LABEL_O)
+        label_set.add(BMESOLabel("", LabelType.O))
 
         for i in range(origin_data_count):
-            with open(self.label_dir + "/{:d}.csv".format(i), 'r', encoding='utf8') as f:
+            with open(label_dir + "/{:d}.csv".format(i), 'r', encoding='utf8') as f:
                 infos = reader.load(f)
 
             for info in infos:
@@ -45,7 +46,7 @@ class LabelFormatter:
                 end_index = info.Pos_e
                 if end_index - start_index > 1:
                     label_set.add(BMESOLabel(type_name, LabelType.B))
-                    label_set.add(BMESOLabel(type_name, LabelType.I))
+                    label_set.add(BMESOLabel(type_name, LabelType.M))
                     label_set.add(BMESOLabel(type_name, LabelType.E))
                 elif start_index == end_index:   
                     label_set.add(BMESOLabel(type_name, LabelType.S))
