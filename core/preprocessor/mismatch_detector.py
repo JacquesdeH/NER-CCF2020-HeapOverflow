@@ -38,37 +38,36 @@ class MismatchDetector:
     # def __del__(self):
     #    self.save()
 
-    def fix_mismatch(self, data:str, infos:"List[LabelInfo]") -> (str, "List[LabelInfo]"):
+    def fix_mismatch(self, data:str, infos:"Iterable[LabelInfo]") -> (str, "List[LabelInfo]"):
         new_data = data.replace('\n', '')
         reader = LabelFileReader()
         for no, info in enumerate(infos):
             if new_data[info.Pos_b : info.Pos_e + 1] != info.Privacy:
                 self.mismatch_count += 1
-                if info.ID in self.tactics.keys():
-                    tac = self.tactics[info.ID]
+                if str(info.ID) in self.tactics.keys():
+                    tac = self.tactics[str(info.ID)]
                     if tac["solved"] == "true":
                         self.fix_count += 1
                         new_new_data = tac["data"]
                         new_infos = tac["labels"]
-                        new_infos = [map(reader.loads, new_infos)]
+                        new_infos = list(map(reader.loads, new_infos))
                         # 检查是否正确
-                        for info in infos:
+                        for info in new_infos:
                             if new_new_data[info.Pos_b : info.Pos_e + 1] != info.Privacy:
                                 tac["solved"] = "false"
                                 self.logger.log_message("mismatch not solve with id={:d}".format(infos[0].ID))
                                 return (None, None)
                         self.logger.log_message("solve a mismatch with id={:d}".format(infos[0].ID))
                         return (new_new_data, new_infos)
-                else:
-                    self.logger.log_message("detect a mismatch with id={:d}".format(infos[0].ID))
-                    msg = {
-                        "solved": "false",
-                        "data" : new_data,
-                        "labels" : infos,
-                        "no" : no
-                    }
-                    self.tactics[info.ID] = msg
-                    return (None, None)
+                self.logger.log_message("detect a mismatch with id={:d}".format(infos[0].ID))
+                msg = {
+                    "solved": "false",
+                    "data" : new_data,
+                    "labels" : list(map(reader.dumps, infos)),
+                    "no" : no
+                }
+                self.tactics[str(info.ID)] = msg
+                return (None, None)
         return (new_data, infos)
 
 

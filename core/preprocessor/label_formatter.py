@@ -23,7 +23,7 @@ class LabelFormatter:
         self.logger.log_message("end - - - - - - - - - - - - - - - - - - - - -")
 
     @staticmethod
-    def format(infos: "List[LabelInfo]", length: int) -> "List[str]":
+    def format(infos: "Iterable[LabelInfo]", length: int) -> "List[str]":
         lst = ["O"] * length
         for info in infos:
             type_name = info.Category
