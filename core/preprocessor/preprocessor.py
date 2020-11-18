@@ -21,9 +21,16 @@ class Preprocessor:
         self.trasformer = self.label_formatter.fit(self.origin_dir + "/train/label")
 
     def produce_train(self):
+        signature = "produce_train():\t"
+
+        self.logger.log_message(signature, "start!")
+
         origin_data_count = len(os.listdir(self.origin_dir + "/train/data"))
-        self.logger.log_message("format_all():", "origin data count:\t", origin_data_count)
+        self.logger.log_message(signature, "origin data count:\t", origin_data_count)
         reader = LabelFileReader()
+
+        dup_count = 0
+        unsolve_mismatch = []
 
         for i in range(origin_data_count):
             with open(self.origin_dir + "/train/label/{:d}.csv".format(i), 'r', encoding='utf8') as f:
@@ -34,22 +41,78 @@ class Preprocessor:
             data, infos = self.mismatch_detector.fix_mismatch(data, infos)
 
             if data is None or infos is None:
+                unsolve_mismatch.append(i)
                 continue
 
             to_remove = self.duplication_detector.auto_clean_judge(infos)
 
             for info in to_remove:
                 infos.remove(info)
-                self.logger.log_message("[{:d}]\tremoving dup\t".format(i), reader.dumps(info))
+                dup_count += 1
+                self.logger.log_message("produce_train():\t", "[{:d}]\tremoving dup\t".format(i), reader.dumps(info))
 
             integer_tags = self.label_formatter.infos_to_integer_list_label(infos, len(data))
 
             with open(self.target_dir + "/train/data/{:d}.json".format(i), 'w', encoding='utf8') as f:
-                json.dump(integer_tags, f)
+                f.write(data)
             with open(self.target_dir + "/train/label/{:d}.json".format(i), 'w', encoding='utf8') as f:
                 json.dump(integer_tags, f)
-    
+        
+        self.logger.log_message(signature, "remove duplication {:d} times".format(dup_count))
+        self.logger.log_message(signature, "detect {:d} unsolved mismatch".format(len(unsolve_mismatch)))
+        if len(unsolve_mismatch) != 0:
+            self.logger.log_message(signature, "their ID are:")
+            for unsolve_id in unsolve_mismatch:
+                self.logger.log_message(signature, "\t{:d}".format(unsolve_id))
 
-if __name__ == "__main__":
+        self.logger.log_message(signature, "finish!")
+
+    def produce_test(self):
+        signature = "produce_test():\t"
+        self.logger.log_message(signature, "start!")
+        origin_data_count = len(os.listdir(self.origin_dir + "/test"))
+        self.logger.log_message(signature, "origin data count:\t", origin_data_count)
+        reader = LabelFileReader()
+
+        for i in range(origin_data_count):
+            with open(self.origin_dir + "/test/{:d}.txt".format(i), 'r', encoding='utf8') as f:
+                data = f.read()
+            
+            data = data.replace('\n', '')
+
+            with open(self.target_dir + "/test/data/{:d}.txt".format(i), 'w', encoding='utf8') as f:
+                f.write(data)
+        self.logger.log_message(signature, "finish!")
+
+def quick_preproduce():
+    logger = alloc_logger()
+    try:
+        new_dir = DefaultConfig.PATHS.DATA_CCF_CLEANED + "/test/data"
+        logger.log_message("mkdir " + new_dir)
+        os.makedirs(new_dir)
+    except FileExistsError:
+        logger.log_message("has existed")
+    try:
+        new_dir = DefaultConfig.PATHS.DATA_CCF_CLEANED + "/test/label"
+        logger.log_message("mkdir " + new_dir)
+        os.makedirs(new_dir)
+    except FileExistsError:
+        logger.log_message("has existed")
+    try:
+        new_dir = DefaultConfig.PATHS.DATA_CCF_CLEANED + "/train/data"
+        logger.log_message("mkdir " + new_dir)
+        os.makedirs(new_dir)
+    except FileExistsError:
+        logger.log_message("has existed")
+    try:
+        new_dir = DefaultConfig.PATHS.DATA_CCF_CLEANED + "/train/label"
+        logger.log_message("mkdir " + new_dir)
+        os.makedirs(new_dir)
+    except FileExistsError:
+        logger.log_message("has existed")
     preprocessor = Preprocessor()
     preprocessor.produce_train()
+    preprocessor.produce_test()
+
+if __name__ == "__main__":
+    quick_preproduce()

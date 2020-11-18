@@ -71,7 +71,7 @@ class LabelFormatter:
                 continue
 
             # 多字
-            m_sym = BMESOLabel(type_name, LabelType.M)            # 名词短语中间的标记
+            m_sym = self.transformer.label_to_integer(BMESOLabel(type_name, LabelType.M))            # 名词短语中间的标记
             for i in range(start_index, end_index + 1):
                 if i == start_index:
                     lst[i] = self.transformer.label_to_integer(BMESOLabel(type_name, LabelType.B))   # 标记名词短语的开头
