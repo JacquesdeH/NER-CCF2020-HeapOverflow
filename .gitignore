@@ -1,6 +1,0 @@
-*.log
-__pycache__/
-.gitignore
-*.debug
-data/CCF/debug/*
-data/CCF/cleaned/*
