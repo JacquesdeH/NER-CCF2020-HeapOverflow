@@ -23,6 +23,7 @@ class DefaultConfig:
     class HYPER:
         BATCH_SIZE = 32
         SEQ_LEN = 500
+        LABEL_DIM = 47
 
     class LOG:
         DEFAULT_LOG_DIR = "default.log"
