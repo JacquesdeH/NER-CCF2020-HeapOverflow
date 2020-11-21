@@ -24,6 +24,8 @@ class DefaultConfig:
         BATCH_SIZE = 32
         SEQ_LEN = 500
         LABEL_DIM = 47
+        EPOCH = 3
+        LR = 1e-3
 
     class LOG:
         DEFAULT_LOG_DIR = "default.log"

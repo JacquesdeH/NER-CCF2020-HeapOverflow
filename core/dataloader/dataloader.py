@@ -64,11 +64,12 @@ class CCFDataset(tud.Dataset):
         if self.in_train:
             with open(self.label + '/' + self.label_file_list[idx], encoding="utf8") as f_label:
                 label_list = json.load(f_label)
-                label_list = [[(1 if count == sequence else 0) for count in range(DefaultConfig.HYPER.LABEL_DIM)] for sequence in label_list]
+                #label_list = [[(1 if count == sequence else 0) for count in range(DefaultConfig.HYPER.LABEL_DIM)] for sequence in label_list]
                 if len(label_list) >= DefaultConfig.HYPER.SEQ_LEN:
                     label_list = label_list[:DefaultConfig.HYPER.SEQ_LEN]
                 else:
-                    label_list += [[0] * DefaultConfig.HYPER.LABEL_DIM for count in range(DefaultConfig.HYPER.SEQ_LEN - len(label_list))]
+                    label_list += [0 for count in range(DefaultConfig.HYPER.SEQ_LEN - len(label_list))]
+                    #label_list += [[0] * DefaultConfig.HYPER.LABEL_DIM for count in range(DefaultConfig.HYPER.SEQ_LEN - len(label_list))]
                 label_content = torch.LongTensor(label_list)
                 return data_content, label_content
         else:
