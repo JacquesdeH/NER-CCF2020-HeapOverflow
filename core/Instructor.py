@@ -25,11 +25,14 @@ def get_optimizer(params, lr=1e-3):
 
 '''
 return batch_size and learning_rate
+data_content: list: batch_size
+label_content: [batch_size, seq_len] 
 '''
 def n_time_k_fold(n, k, dataloader):
     module = TempModule()
     loss_fn = get_loss_fn()
     optimizer = get_optimizer(module.parameters())
+    #schedule = torch.optim.lr_scheduler.ExponentialLR(optimizer, 0.5)
     k_fold = KFold(dataloader=dataloader, k=k)
     for time in range(n):
         total_loss = 0.
