@@ -3,6 +3,7 @@ from .dataloader.dataloader import CCFDataloader
 from .dataloader.dataloader import KFold
 import torch
 import torch.nn as nn
+import os
 
 
 class TempModule(nn.Module):
@@ -23,6 +24,15 @@ def get_optimizer(params, lr=1e-3):
     return torch.optim.Adam(params=params, lr=lr)
 
 
+def save_module(module: nn.Module):
+    os.makedirs(config.PATHS.DATA_MODULE)
+    torch.save(module.state_dict(), config.PATHS.DATA_MODULE + "/module.th")
+
+
+def load_module(module: nn.Module):
+    module.load_state_dict(torch.load(config.PATHS.DATA_MODULE + 'module.th'))
+
+
 '''
 return batch_size and learning_rate
 data_content: list: batch_size
@@ -34,6 +44,7 @@ def n_time_k_fold(n, k, dataloader):
     optimizer = get_optimizer(module.parameters())
     #schedule = torch.optim.lr_scheduler.ExponentialLR(optimizer, 0.5)
     k_fold = KFold(dataloader=dataloader, k=k)
+    loss_history = list()
     for time in range(n):
         total_loss = 0.
         for fold in range(k):
@@ -53,6 +64,7 @@ def n_time_k_fold(n, k, dataloader):
             k_fold.next_fold()
         k_fold.new_k_fold()
         print('total loss: %d' % total_loss)
+        loss_history.append(total_loss)
 
 
 def train(k_fold=False):
