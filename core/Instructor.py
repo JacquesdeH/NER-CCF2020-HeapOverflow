@@ -38,19 +38,23 @@ return batch_size and learning_rate
 data_content: list: batch_size
 label_content: [batch_size, seq_len] 
 '''
-def n_time_k_fold(n, k, dataloader):
+
+
+def train(n_time, k_fold):
+    dataloader = CCFDataloader()
     module = TempModule()
     loss_fn = get_loss_fn()
     optimizer = get_optimizer(module.parameters())
     #schedule = torch.optim.lr_scheduler.ExponentialLR(optimizer, 0.5)
-    k_fold = KFold(dataloader=dataloader, k=k)
+    k_fold = KFold(dataloader=dataloader, k=k_fold)
     loss_history = list()
-    for time in range(n):
+    for time in range(n_time):
         total_loss = 0.
-        for fold in range(k):
+        for fold in range(k_fold):
             for data_content, label_content in k_fold.get_train():
                 label_predict = module(dataloader)
                 loss = loss_fn(label_predict, label_content)
+
                 optimizer.zero_grad()
                 loss.backward()
                 optimizer.step()
@@ -67,8 +71,10 @@ def n_time_k_fold(n, k, dataloader):
         loss_history.append(total_loss)
 
 
+'''
 def train(k_fold=False):
     module = TempModule()
     dataloader = CCFDataloader()
     loss_fn = get_loss_fn()
     optimizer = get_optimizer(module.parameters())
+'''
