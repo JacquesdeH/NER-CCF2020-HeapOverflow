@@ -104,6 +104,7 @@ class Logger:
         self._log_file.write(total_msg + '\n')
 
 _default_logger = None
+logger_pool = {}
 
 def alloc_logger(log_file_name: str=None, default_head: str or "__name__"=None, default_mid:str='',console_output:bool=True):
     """
@@ -112,6 +113,7 @@ def alloc_logger(log_file_name: str=None, default_head: str or "__name__"=None, 
     log_file_name 是相对于 log 文件夹的目录
     """
     global _default_logger
+    global logger_pool
     if log_file_name == None:
         if _default_logger is None:
             log_file_name = DefaultConfig.LOG.DEFAULT_LOG_DIR
@@ -120,7 +122,11 @@ def alloc_logger(log_file_name: str=None, default_head: str or "__name__"=None, 
             need_console = DefaultConfig.LOG.DEFAULT_NEED_CONSOLE
             _default_logger = Logger(log_file_name, signature, mid, need_console)
         return _default_logger
-    return Logger(log_file_name, default_head, default_mid, console_output)
+    if log_file_name in logger_pool:
+        return logger_pool[log_file_name]
+    ret = Logger(log_file_name, default_head, default_mid, console_output)
+    logger_pool[log_file_name] = ret
+    return ret
      
 def log_message(*msg:"can to str", head:str or "__name__"=None, mid:str=None, end:str='\n'):   
     """
