@@ -5,6 +5,14 @@ import json
 from ..config.DefaultConfig import DefaultConfig
 
 
+
+_default_logger = None
+logger_pool = {}
+total_file_reference = 0
+total_file = None
+
+
+
 class Logger:
     """
     日志类.
@@ -17,17 +25,44 @@ class Logger:
             default_head: str or "__name__", 
             default_mid: str, 
             console_output: bool):
-        self._log_file = open(DefaultConfig.PATHS.LOG + '/' + log_file_name, 'a', encoding='utf8')
+        
+        # 引用全局日志文件
+        global total_file_reference
+        global total_file
+        total_file_reference += 1
+        if total_file is None or total_file.closed:
+            total_file = open(os.path.join(DefaultConfig.PATHS.LOG, "total.log"), 'a', encoding='utf8')
+        
+        self.log_file_name = log_file_name
+        self._log_file = open(os.path.join(DefaultConfig.PATHS.LOG, log_file_name), 'a', encoding='utf8')
         self.console_output = console_output
         self._default_mid = default_mid
         self._default_signature = self.format_signature(default_head) if default_head is not None else None
 
     def __del__(self):
+        self.file_message("", need_total=False)
+        self.file_message("", need_total=False)
+        self.file_message("", need_total=False)
         self._log_file.close()
+
+        # 解除全局日志文件的引用
+        global total_file_reference
+        global total_file
+        print("deleting logger[", self.log_file_name, "]")
+        total_file_reference -= 1
+        if total_file_reference == 0:
+            total_file.close()
+            print("closing total_log_file")
+        
+
     
     @staticmethod
     def get_time_stampe():
         return time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(time.time()))
+    
+    @staticmethod
+    def get_fs_legal_time_stampe():
+        return time.strftime("%Y-%m-%d_%H-%M-%S", time.localtime(time.time()))
 
     @staticmethod
     def format_signature(signature) -> str or None:
@@ -73,7 +108,7 @@ class Logger:
         total_msg = self.format_msg(*msg, head=head, mid=mid)
         print(total_msg, end=end)
 
-    def file_message(self, *msg:"can to str", head:str or "__name__"=None, mid:str=None):
+    def file_message(self, *msg:"can to str", head:str or "__name__"=None, mid:str=None, need_total:bool=True):
         """
         向日志文件写入信息.
         将转发 msg, head, mid 至 format_msg() 函数进行格式化, 具体如下:
@@ -83,9 +118,13 @@ class Logger:
         @param head: 头部, 以 @xxx 形式添加到时间戳之后, head需要是一个字符串或者拥有__name__属性的对象;
         @param mid: 连接 msg 各个内容的连接符;
         @param end: 结尾的符号, 仅对console内容有效, 写入日志文件时必定以回车结尾;
+        @param need_total: 是否需要向全局日志文件写入;
         """
+        global total_file
         total_msg = self.format_msg(*msg, head=head, mid=mid)
         self._log_file.write(total_msg + '\n')
+        if need_total:
+            total_file.write(total_msg + '\n')
 
     def log_message(self, *msg:"can to str", head:str or "__name__"=None, mid:str=None, end:str='\n'):     
         """
@@ -98,12 +137,15 @@ class Logger:
         @param mid: 连接 msg 各个内容的连接符;
         @param end: 结尾的符号, 仅对console内容有效, 写入日志文件时必定以回车结尾;
         """
+        global total_file
         total_msg = self.format_msg(*msg, head=head, mid=mid)
         if self.console_output:
             print(total_msg, end=end)
         self._log_file.write(total_msg + '\n')
+        total_file.write(total_msg + '\n')
 
-_default_logger = None
+
+
 
 def alloc_logger(log_file_name: str=None, default_head: str or "__name__"=None, default_mid:str='',console_output:bool=True):
     """
@@ -112,6 +154,7 @@ def alloc_logger(log_file_name: str=None, default_head: str or "__name__"=None, 
     log_file_name 是相对于 log 文件夹的目录
     """
     global _default_logger
+    global logger_pool
     if log_file_name == None:
         if _default_logger is None:
             log_file_name = DefaultConfig.LOG.DEFAULT_LOG_DIR
@@ -120,7 +163,11 @@ def alloc_logger(log_file_name: str=None, default_head: str or "__name__"=None, 
             need_console = DefaultConfig.LOG.DEFAULT_NEED_CONSOLE
             _default_logger = Logger(log_file_name, signature, mid, need_console)
         return _default_logger
-    return Logger(log_file_name, default_head, default_mid, console_output)
+    if log_file_name in logger_pool:
+        return logger_pool[log_file_name]
+    ret = Logger(log_file_name, default_head, default_mid, console_output)
+    logger_pool[log_file_name] = ret
+    return ret
      
 def log_message(*msg:"can to str", head:str or "__name__"=None, mid:str=None, end:str='\n'):   
     """
