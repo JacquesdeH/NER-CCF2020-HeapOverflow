@@ -9,6 +9,7 @@ import torch
 import torch.nn as nn
 from transformers import AutoTokenizer, AutoModel
 from keras.preprocessing.sequence import pad_sequences
+from torchcrf import CRF
 
 
 class Net(nn.Module):
@@ -21,6 +22,10 @@ class Net(nn.Module):
         self.lstm = nn.LSTM(input_size=self.args.embed_dim, hidden_size=self.args.lstm_hidden,
                             num_layers=self.args.lstm_layers, batch_first=True,
                             bidirectional=self.args.lstm_directs == 2).to(self.args.device)
+        
+        self.emissions = torch.autograd.Variable(torch.randn(self.args.seq_len, self.args.batch_size, self.args.num_tags),
+                                                 requires_grad=True)
+        self.crf = CRF(num_tags=self.args.num_tags, batch_first=True).to(self.args.device)
 
     def forward(self, texts: list):
         batch_size = len(texts)
