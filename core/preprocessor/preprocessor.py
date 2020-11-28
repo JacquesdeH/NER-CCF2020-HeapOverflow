@@ -54,7 +54,7 @@ class Preprocessor:
 
             integer_tags = self.label_formatter.infos_to_integer_list_label(infos, len(data))
 
-            with open(self.target_dir + "/train/data/{:d}.json".format(i), 'w', encoding='utf8') as f:
+            with open(self.target_dir + "/train/data/{:d}.txt".format(i), 'w', encoding='utf8') as f:
                 f.write(data)
             with open(self.target_dir + "/train/label/{:d}.json".format(i), 'w', encoding='utf8') as f:
                 json.dump(integer_tags, f)
@@ -114,6 +114,7 @@ def quick_preproduce() -> LabelTrasformer:
     preprocessor = Preprocessor()
     preprocessor.produce_train()
     preprocessor.produce_test()
+    preprocessor.trasformer.save_to_file()
     return preprocessor.trasformer
 
 if __name__ == "__main__":

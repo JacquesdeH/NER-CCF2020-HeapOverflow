@@ -14,6 +14,9 @@ parser.add_argument('--embed_dim', default=config.HYPER.EMBED_DIM, type=int)
 parser.add_argument('--lstm_hidden', default=config.HYPER.LSTM_HIDDEN, type=int)
 parser.add_argument('--lstm_layers', default=config.HYPER.LSTM_LAYERS, type=int)
 parser.add_argument('--lstm_directs', default=config.HYPER.LSTM_DIRECTS, type=int)
+parser.add_argument('--label_dim', default=config.HYPER.LABEL_DIM)
+parser.add_argument('--epoch', default=config.HYPER.EPOCH)
+parser.add_argument('--lr', default=config.HYPER.LR)
 
 args = parser.parse_args()
 
