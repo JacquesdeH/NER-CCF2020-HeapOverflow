@@ -26,6 +26,6 @@ class DefaultConfig:
 
     class LOG:
         DEFAULT_LOG_DIR = "default.log"
-        DEFAULT_HEAD = '_DEFAULT_'
+        DEFAULT_HEAD = ''
         DEFAULT_MID = ''
         DEFAULT_NEED_CONSOLE = True

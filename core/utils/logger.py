@@ -33,6 +33,7 @@ class Logger:
         if total_file is None or total_file.closed:
             total_file = open(os.path.join(DefaultConfig.PATHS.LOG, "total.log"), 'a', encoding='utf8')
         
+        self.log_file_name = log_file_name
         self._log_file = open(os.path.join(DefaultConfig.PATHS.LOG, log_file_name), 'a', encoding='utf8')
         self.console_output = console_output
         self._default_mid = default_mid
@@ -47,7 +48,7 @@ class Logger:
         # 解除全局日志文件的引用
         global total_file_reference
         global total_file
-        print("deleting logger[", self._default_signature, "]")
+        print("deleting logger[", self.log_file_name, "]")
         total_file_reference -= 1
         if total_file_reference == 0:
             total_file.close()
