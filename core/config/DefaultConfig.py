@@ -21,8 +21,13 @@ class DefaultConfig:
         DATA_CCF_FMT = os.path.join(DATA_CCF, os.path.join("formatted"))
 
     class HYPER:
+        PRETRAINED = 'bert-base-chinese'
         BATCH_SIZE = 32
         SEQ_LEN = 500
+        EMBED_DIM = 768
+        LSTM_HIDDEN = 256
+        LSTM_DIRECTS = 2
+        LSTM_LAYERS = 2
 
     class LOG:
         DEFAULT_LOG_DIR = "default.log"
