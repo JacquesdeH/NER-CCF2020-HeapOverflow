@@ -28,9 +28,11 @@ class Iterator:
 
 
 class CCFDataset(tud.Dataset):
-    def __init__(self, in_train=True):
+    def __init__(self, in_train=True, seq_len=DefaultConfig.HYPER.SEQ_LEN, label_dim=DefaultConfig.HYPER.LABEL_DIM):
         super().__init__()
         self.in_train = in_train
+        self.seq_len = seq_len
+        self.label_dim = label_dim
 
         self.data_path = DefaultConfig.PATHS.DATA_CCF_CLEANED
         if self.in_train:
@@ -64,12 +66,12 @@ class CCFDataset(tud.Dataset):
         if self.in_train:
             with open(self.label + '/' + self.label_file_list[idx], encoding="utf8") as f_label:
                 label_list = json.load(f_label)
-                #label_list = [[(1 if count == sequence else 0) for count in range(DefaultConfig.HYPER.LABEL_DIM)] for sequence in label_list]
-                if len(label_list) >= DefaultConfig.HYPER.SEQ_LEN:
-                    label_list = label_list[:DefaultConfig.HYPER.SEQ_LEN]
+                #label_list = [[(1 if count == sequence else 0) for count in range(self.label_dim)] for sequence in label_list]
+                if len(label_list) >= self.seq_len:
+                    label_list = label_list[:self.seq_len]
                 else:
-                    label_list += [0 for count in range(DefaultConfig.HYPER.SEQ_LEN - len(label_list))]
-                    #label_list += [[0] * DefaultConfig.HYPER.LABEL_DIM for count in range(DefaultConfig.HYPER.SEQ_LEN - len(label_list))]
+                    label_list += [0 for count in range(self.seq_len - len(label_list))]
+                    #label_list += [[0] * DefaultConfig.HYPER.LABEL_DIM for count in range(self.seq_len - len(label_list))]
                 label_content = torch.LongTensor(label_list)
                 return data_content, label_content
         else:
