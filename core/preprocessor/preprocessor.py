@@ -114,6 +114,7 @@ def quick_preproduce() -> LabelTrasformer:
     preprocessor = Preprocessor()
     preprocessor.produce_train()
     preprocessor.produce_test()
+    preprocessor.trasformer.save_to_file()
     return preprocessor.trasformer
 
 if __name__ == "__main__":

@@ -1,5 +1,8 @@
 import enum
+import os
+import json
 from ..utils import alloc_logger
+from ..config.DefaultConfig import DefaultConfig
 from collections import namedtuple
 
 BMESOLabel = namedtuple("BMESOLabel", ["name", "type"])
@@ -29,6 +32,47 @@ class LabelTrasformer:
         for idx, label in enumerate(self.label_table):
             self.label_index[label] = idx
             self.logger.log_message(idx, "\t:\t", self.label_to_string(label))
+
+
+    def save_to_file(self):
+        map_file_name = os.path.join(DefaultConfig.PATHS.DATA_INFO, "trans_map.json")
+        table_file_name = os.path.join(DefaultConfig.PATHS.DATA_INFO, "trans_table.json")
+
+        save_label_table = list(map(self.label_to_string, self.label_table))
+        save_label_index = {}
+        for k, v in self.label_index.items():
+            save_label_index[self.label_to_string(k)] = v
+
+        with open(table_file_name, 'w', encoding='utf8') as f:
+            json.dump(save_label_table, f)
+            self.logger.log_message("save label table in file [", table_file_name, ']')
+        with open(map_file_name, 'w', encoding='utf8') as f:
+            json.dump(save_label_index, f)
+            self.logger.log_message("save trans map in file [", map_file_name, ']')
+
+    @staticmethod
+    def load_from_file(map_file_name: str = None, table_file_name: str = None):
+        if map_file_name is None:
+            map_file_name = os.path.join(DefaultConfig.PATHS.DATA_INFO, "trans_map.json")
+        if table_file_name is None:
+            table_file_name = os.path.join(DefaultConfig.PATHS.DATA_INFO, "trans_table.json")
+
+        
+        ret = LabelTrasformer([])
+        with open(table_file_name, 'w', encoding='utf8') as f:
+            save_label_table = json.load(f)
+            ret.logger.log_message("load label table from file [", table_file_name, ']')
+        with open(map_file_name, 'w', encoding='utf8') as f:
+            save_label_index = json.load(f)
+            ret.logger.log_message("load trans map from file [", map_file_name, ']')
+        
+        ret.label_table = list(map(ret.string_to_label, save_label_table))
+        for k, v in save_label_index.items():
+            ret.label_index[ret.string_to_label(k)] = v
+        
+        return ret
+
+        
 
     def label_to_integer(self, label: BMESOLabel) -> int:
         if label.type is LabelType.O:
