@@ -9,7 +9,7 @@ import torch
 import torch.nn as nn
 from transformers import AutoTokenizer, AutoModel
 from keras.preprocessing.sequence import pad_sequences
-from model import CRF
+from CRF import CRF
 
 
 class Net(nn.Module):
