@@ -37,7 +37,9 @@ class Net(nn.Module):
                                  nn.ReLU(),
                                  nn.Linear(in_features=self.lstm_directs * self.args.lstm_hidden, out_features=self.args.lstm_hidden),
                                  nn.Sigmoid()).to(self.args.device)
-                                 
+        
+        self.dropout = nn.Dropout(0.4).to(self.args.device) 
+        
         self.fc2 = nn.Sequential(nn.Linear(in_features=self.args.lstm_hidden, out_features=self.args.lstm_hidden),
                                  # nn.BatchNorm
                                  nn.ReLU(),
@@ -46,10 +48,9 @@ class Net(nn.Module):
                                  nn.ReLU(),
                                  nn.Linear(in_features=self.args.lstm_hidden, out_features=self.args.num_tags + 2),
                                  nn.Sigmoid()).to(self.args.device)
-        self.dropout = nn.Dropout(0.4).to(self.args.device)
+        
         self.crf = CRF(target_size=self.args.num_tags, average_batch=True).to(self.args.device)
 
-    
     def get_output_score(self, texts: list):
         batch_size = len(texts)
         input_ids = [self.tokenizer.encode(text, add_special_tokens=True, max_length=self.args.seq_len, truncation=True)
@@ -76,7 +77,6 @@ class Net(nn.Module):
         lstm_emissions = fc2_out.contiguous().view(batch_size, self.arfs.seq_len, -1)
         # lstm_emissions -> [batch, seq_len, num_tags + 2]
         return lstm_emissions
-    
     
     def forward(self, texts: list):
         lstm_feats = self.get_output_score(texts)
