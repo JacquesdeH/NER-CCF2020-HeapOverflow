@@ -5,7 +5,7 @@ import os
 import json
 import random
 from ..utils import alloc_logger
-
+from Main import args as tempArgs
 
 class Iterator:
     def __init__(self, target, indices=[]):
@@ -28,11 +28,12 @@ class Iterator:
 
 
 class CCFDataset(tud.Dataset):
-    def __init__(self, in_train=True, seq_len=DefaultConfig.HYPER.SEQ_LEN, label_dim=DefaultConfig.HYPER.LABEL_DIM):
+    def __init__(self, args, in_train=True):
         super().__init__()
         self.in_train = in_train
-        self.seq_len = seq_len
-        self.label_dim = label_dim
+        self.args = args
+        self.seq_len = args.seq_len
+        self.label_dim = args.label_dim
 
         self.data_path = DefaultConfig.PATHS.DATA_CCF_CLEANED
         if self.in_train:
@@ -71,19 +72,20 @@ class CCFDataset(tud.Dataset):
                     label_list = label_list[:self.seq_len]
                 else:
                     label_list += [0 for count in range(self.seq_len - len(label_list))]
-                    # label_list += [[0] * DefaultConfig.HYPER.LABEL_DIM for count in range(self.seq_len - len(label_list))]
+                    # label_list += [[0] * self.args.label_dim for count in range(self.seq_len - len(label_list))]
                 label_content = torch.LongTensor(label_list)
-                return data_content, label_content
+                return data_content, label_content.to(self.args.device)
         else:
             return data_content
 
 
 class CCFDataloader:
-    def __init__(self, in_train=True, batch_size=DefaultConfig.HYPER.BATCH_SIZE, thread_num=1):
+    def __init__(self, args, in_train=True, thread_num=1):
+        self.args = args
         self.logger = alloc_logger("CCFDataloader.log", CCFDataloader)
         self.in_train = in_train
-        self.dataset = CCFDataset(self.in_train)
-        self.batch_size = batch_size
+        self.dataset = CCFDataset(args=args, in_train=self.in_train)
+        self.batch_size = args.batch_size
         self.thread_num = thread_num
         self.file_num = len(self.dataset)
         self.dataset_index = list(range(self.file_num))
@@ -167,7 +169,7 @@ class KFold:
 
 if __name__ == "__main__":
     '''
-    ccf_dataloader = CCFDataloader(in_train=True)
+    ccf_dataloader = CCFDataloader(args=Tempargs, in_train=True)
     for i, (data_contents, label_contents) in enumerate(ccf_dataloader):
         if i == 5:
             break
@@ -175,7 +177,7 @@ if __name__ == "__main__":
         print(data_contents)
         print(label_contents)
     '''
-    ccf_dataloader = CCFDataloader(in_train=True)
+    ccf_dataloader = CCFDataloader(args=tempArgs, in_train=True)
     print(len(ccf_dataloader))
     k_fold = KFold(ccf_dataloader, 10)
     for fold_count in range(len(k_fold)):
@@ -190,8 +192,8 @@ if __name__ == "__main__":
             '''
             if count == 0:
                 print('---train_%d---' % count)
-                print(data_content)
-                print(label_content)
+                print(len(data_content))
+                print(len(label_content), label_content.device)
             count += 1
         count = 0
         print('--------VALID--------')
@@ -203,7 +205,7 @@ if __name__ == "__main__":
             '''
             if count == 0:
                 print('---valid_%d---' % count)
-                print(data_content)
-                print(label_content)
+                print(len(data_content))
+                print(len(label_content), label_content.device)
             count += 1
         k_fold.next_fold()
