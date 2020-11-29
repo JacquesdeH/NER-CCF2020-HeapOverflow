@@ -181,9 +181,29 @@ if __name__ == "__main__":
     for fold_count in range(len(k_fold)):
         print("=============NEW FOLD============")
         count = 0
+        print('--------TRAIN--------')
         for data_content, label_content in k_fold.get_train():
+            '''
+            print('---train_%d---' % count)
             print(len(data_content))
             print(label_content.shape)
+            '''
+            if count == 0:
+                print('---train_%d---' % count)
+                print(data_content)
+                print(label_content)
             count += 1
-        break
-        #k_fold.next_fold()
+        count = 0
+        print('--------VALID--------')
+        for data_content, label_content in k_fold.get_valid():
+            '''
+            print('---valid_%d---' % count)
+            print(len(data_content))
+            print(label_content.shape)
+            '''
+            if count == 0:
+                print('---valid_%d---' % count)
+                print(data_content)
+                print(label_content)
+            count += 1
+        k_fold.next_fold()
