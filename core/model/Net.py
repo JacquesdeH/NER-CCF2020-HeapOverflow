@@ -47,7 +47,7 @@ class Net(nn.Module):
                                  nn.Linear(in_features=self.args.lstm_hidden, out_features=self.args.num_tags + 2),
                                  nn.Sigmoid()).to(self.args.device)
         self.dropout = nn.Dropout(0.4).to(self.args.device)
-        self.crf = CRF(num_tags=self.args.num_tags, batch_first=True).to(self.args.device)
+        self.crf = CRF(target_size=self.args.num_tags, average_batch=True).to(self.args.device)
 
     
     def get_output_score(self, texts: list):
@@ -79,8 +79,8 @@ class Net(nn.Module):
     
     
     def forward(self, texts: list):
-        lstm_emissions = self.get_output_score(texts)
-        tag_seq = self.crf.decode(emissions=lstm_emissions, mask=attention_masks)
+        lstm_feats = self.get_output_score(texts)
+        scores, tag_seq = self.crf._viterbi_decode(feats=lstm_feats, mask=attention_masks)
         return tag_seq
     
     def neg_log_likelihood_loss(self, texts, mask, tags):
