@@ -11,7 +11,7 @@ import json
 
 
 class Preprocessor:
-    def __init__(self, origin_dir: str=None, target_dir: str=None):
+    def __init__(self, origin_dir: str = None, target_dir: str = None):
         super().__init__()
         self.origin_dir = origin_dir if origin_dir is not None else DefaultConfig.PATHS.DATA_CCF_RAW
         self.target_dir = target_dir if target_dir is not None else DefaultConfig.PATHS.DATA_CCF_CLEANED
@@ -22,7 +22,7 @@ class Preprocessor:
         self.logger = alloc_logger("preprocessor.log", Preprocessor)
         self.trasformer = self.label_formatter.fit(self.origin_dir + "/train/label")
 
-    def produce_train(self, max_size: int=None):
+    def produce_train(self, max_size: int = None):
         """
         如果不指定 max_size 或指定为None, 将不会对原始样本进行分割, 
         如果传入了某个整数, 将会把长度大于 max_size 的文本按照尽可能靠后的句号拆分为长度小于 max_size 的若干段.
@@ -39,7 +39,7 @@ class Preprocessor:
 
         if max_size is not None:
             divider = Divider(max_size)
-            divide_index = []   # [{"target": target_id, "origin": origin_id, "beg": beg_index}]
+            divide_index = []  # [{"target": target_id, "origin": origin_id, "beg": beg_index}]
         reader = LabelFileReader()
         dup_count = 0
         unsolve_mismatch = []
@@ -78,9 +78,10 @@ class Preprocessor:
                     if j != 0:
                         target = alloc_file_num
                         alloc_file_num += 1
-                        divide_index.append({"target": target, "origin":i, "beg":beg})
+                        divide_index.append({"target": target, "origin": i, "beg": beg})
                     if len(divide_result) > 1:
-                        self.logger.log_message(signature, "[{:d}]\t".format(i), "({:3d}:{:3d})->[{:d}]".format(beg, end, target))
+                        self.logger.log_message(signature, "[{:d}]\t".format(i),
+                                                "({:3d}:{:3d})->[{:d}]".format(beg, end, target))
                     with open(self.target_dir + "/train/data/{:d}.txt".format(target), 'w', encoding='utf8') as f:
                         f.write(data[beg: end])
                     with open(self.target_dir + "/train/label/{:d}.json".format(target), 'w', encoding='utf8') as f:
@@ -90,7 +91,7 @@ class Preprocessor:
                     f.write(data)
                 with open(self.target_dir + "/train/label/{:d}.json".format(i), 'w', encoding='utf8') as f:
                     json.dump(integer_tags, f)
-        
+
         if max_size is not None:
             split_index_file_name = os.path.join(DefaultConfig.PATHS.DATA_INFO, "split_index_train.json")
             self.logger.log_message(signature, "saving split index in file[", split_index_file_name, ']')
@@ -107,7 +108,7 @@ class Preprocessor:
 
         self.logger.log_message(signature, "finish!")
 
-    def produce_test(self, max_size: int=None):
+    def produce_test(self, max_size: int = None):
         """
         如果不指定 max_size 或指定为None, 将不会对原始样本进行分割, 
         如果传入了某个整数, 将会把长度大于 max_size 的文本按照尽可能靠后的句号拆分为长度小于 max_size 的若干段.
@@ -124,13 +125,13 @@ class Preprocessor:
 
         if max_size is not None:
             divider = Divider(max_size)
-            divide_index = []   # [{"target": target_id, "origin": origin_id, "beg": beg_index}]
+            divide_index = []  # [{"target": target_id, "origin": origin_id, "beg": beg_index}]
         for i in range(origin_data_count):
             with open(self.origin_dir + "/test/{:d}.txt".format(i), 'r', encoding='utf8') as f:
                 data = f.read()
-            
+
             data = data.replace('\n', '')
-            
+
             # divide & save
             if max_size is not None:
                 divide_result = divider.detect_division(data)
@@ -144,9 +145,10 @@ class Preprocessor:
                     if j != 0:
                         target = alloc_file_num
                         alloc_file_num += 1
-                        divide_index.append({"target": target, "origin":i, "beg":beg})
+                        divide_index.append({"target": target, "origin": i, "beg": beg})
                     if len(divide_result) > 1:
-                        self.logger.log_message(signature, "[{:d}]\t".format(i), "({:3d}:{:3d})->[{:d}]".format(beg, end, target))
+                        self.logger.log_message(signature, "[{:d}]\t".format(i),
+                                                "({:3d}:{:3d})->[{:d}]".format(beg, end, target))
                     with open(self.target_dir + "/test/data/{:d}.txt".format(target), 'w', encoding='utf8') as f:
                         f.write(data[beg: end])
 
@@ -161,7 +163,8 @@ class Preprocessor:
                 json.dump(divide_index, f)
         self.logger.log_message(signature, "finish!")
 
-def quick_preproduce(max_size: int=None) -> LabelTrasformer:
+
+def quick_preproduce(max_size: int = None) -> LabelTrasformer:
     """
     封装好的快速进行预处理的函数.
     如果不指定 max_size 或指定为None, 将不会对原始样本进行分割, 
@@ -200,5 +203,7 @@ def quick_preproduce(max_size: int=None) -> LabelTrasformer:
     preprocessor.trasformer.save_to_file()
     return preprocessor.trasformer
 
+
 if __name__ == "__main__":
-    quick_preproduce(500)
+    from core.config.DefaultConfig import DefaultConfig as config
+    quick_preproduce(config.HYPER.SEQ_LEN)

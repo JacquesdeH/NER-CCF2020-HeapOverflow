@@ -89,8 +89,8 @@ class Net(nn.Module):
         return tag_seq
 
     def neg_log_likelihood_loss(self, texts, mask, tags):
-        lstm_feats = self.get_output_score(texts)
-        loss_value = self.crf.neg_log_likelihood_loss(feats=lstm_feats, mask=mask, tags=tags)
+        lstm_feats, attention_masks = self.get_output_score(texts)
+        loss_value = self.crf.neg_log_likelihood_loss(feats=lstm_feats, mask=attention_masks.type(torch.bool), tags=tags)
         batch_size = lstm_feats.size(0)
         loss_value /= float(batch_size)
         return loss_value

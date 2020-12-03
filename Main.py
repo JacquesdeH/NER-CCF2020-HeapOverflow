@@ -1,9 +1,11 @@
 import argparse
 import torch
+import warnings
 
 from core.config.DefaultConfig import DefaultConfig as config
 from core import Instructor
 
+warnings.filterwarnings('ignore')
 
 parser = argparse.ArgumentParser()
 
