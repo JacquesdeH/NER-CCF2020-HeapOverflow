@@ -17,7 +17,7 @@ LabelInfo = namedtuple("LabelInfo", ["ID", "Category", "Pos_b", "Pos_e", "Privac
 class LabelFileReader:
     def __init__(self):
         self.csv_re = re.compile(r"^(\d+),(\w+),(\d+),(\d+),(.+)$")
-        self.logger = alloc_logger("label_file_reader.log", default_head=LabelFileReader)
+        self.logger = alloc_logger("preprocessor.log", default_head=LabelFileReader)
     
     def loads(self, line_content) -> LabelInfo:
         m = self.csv_re.match(line_content)

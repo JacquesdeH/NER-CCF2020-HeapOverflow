@@ -7,10 +7,9 @@ from ..config.DefaultConfig import DefaultConfig
 
 
 _default_logger = None
-logger_pool = {}
 total_file_reference = 0
 total_file = None
-
+file_pool = {} # filename: (file, reference)
 
 
 class Logger:
@@ -33,8 +32,17 @@ class Logger:
         if total_file is None or total_file.closed:
             total_file = open(os.path.join(DefaultConfig.PATHS.LOG, "total.log"), 'a', encoding='utf8')
         
-        self.log_file_name = log_file_name
-        self._log_file = open(os.path.join(DefaultConfig.PATHS.LOG, log_file_name), 'a', encoding='utf8')
+        global file_pool
+        if log_file_name in file_pool:
+            self._log_file = file_pool[log_file_name][0] 
+            file_pool[log_file_name][1] += 1
+            print("using log_file in pool [", log_file_name, ']')
+        else:
+            self._log_file = open(os.path.join(DefaultConfig.PATHS.LOG, log_file_name), 'a', encoding='utf8')
+            file_pool[log_file_name] = [self._log_file, 1]
+            print("opening new log_file [", log_file_name, ']')
+
+        self._log_file_name = log_file_name
         self.console_output = console_output
         self._default_mid = default_mid
         self._default_signature = self.format_signature(default_head) if default_head is not None else None
@@ -43,12 +51,18 @@ class Logger:
         self.file_message("", need_total=False)
         self.file_message("", need_total=False)
         self.file_message("", need_total=False)
-        self._log_file.close()
+
+        global file_pool
+        file_pool[self._log_file_name][1] -= 1
+        if file_pool[self._log_file_name][1] == 0:
+            self._log_file.close()
+            print("closing log_file [", self._log_file_name, ']')
+            del file_pool[self._log_file_name]
 
         # 解除全局日志文件的引用
         global total_file_reference
         global total_file
-        print("deleting logger[", self.log_file_name, "]")
+        print("deleting logger [file=", self._log_file_name, ", head=", self._default_signature, "]")
         total_file_reference -= 1
         if total_file_reference == 0:
             total_file.close()
@@ -154,7 +168,6 @@ def alloc_logger(log_file_name: str=None, default_head: str or "__name__"=None, 
     log_file_name 是相对于 log 文件夹的目录
     """
     global _default_logger
-    global logger_pool
     if log_file_name == None:
         if _default_logger is None:
             log_file_name = DefaultConfig.LOG.DEFAULT_LOG_DIR
@@ -163,10 +176,7 @@ def alloc_logger(log_file_name: str=None, default_head: str or "__name__"=None, 
             need_console = DefaultConfig.LOG.DEFAULT_NEED_CONSOLE
             _default_logger = Logger(log_file_name, signature, mid, need_console)
         return _default_logger
-    if log_file_name in logger_pool:
-        return logger_pool[log_file_name]
     ret = Logger(log_file_name, default_head, default_mid, console_output)
-    logger_pool[log_file_name] = ret
     return ret
      
 def log_message(*msg:"can to str", head:str or "__name__"=None, mid:str=None, end:str='\n'):   
