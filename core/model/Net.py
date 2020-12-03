@@ -46,10 +46,11 @@ class Net(nn.Module):
                                  nn.Linear(in_features=self.args.lstm_hidden, out_features=self.args.lstm_hidden),
                                  # nn.BatchNorm
                                  nn.ReLU(),
-                                 nn.Linear(in_features=self.args.lstm_hidden, out_features=self.args.num_tags + 2),
+                                 nn.Linear(in_features=self.args.lstm_hidden, out_features=self.args.label_dim + 2),
                                  nn.Sigmoid()).to(self.args.device)
         
-        self.crf = CRF(target_size=self.args.num_tags, average_batch=True).to(self.args.device)
+        self.crf = CRF(target_size=self.args.label_dim, average_batch=True,
+                       use_cuda=self.args.cuda and torch.cuda.is_available())
 
     def get_output_score(self, texts: list):
         batch_size = len(texts)
@@ -72,15 +73,16 @@ class Net(nn.Module):
         lstm_out = lstm_out.contiguous().view(-1, self.lstm_directs * self.args.lstm_hidden)
         fc1_out = self.fc1(lstm_out)
         fc2_out = self.fc2(self.dropout(fc1_out))
-        # fc2_out -> [batch * seq_len, num_tags + 2]
+        # fc2_out -> [batch * seq_len, label_dim + 2]
         
-        lstm_emissions = fc2_out.contiguous().view(batch_size, self.arfs.seq_len, -1)
-        # lstm_emissions -> [batch, seq_len, num_tags + 2]
-        return lstm_emissions
+        lstm_emissions = fc2_out.contiguous().view(batch_size, self.args.seq_len, -1)
+        # lstm_emissions -> [batch, seq_len, label_dim + 2]
+        return lstm_emissions, attention_masks
     
     def forward(self, texts: list):
-        lstm_feats = self.get_output_score(texts)
-        scores, tag_seq = self.crf._viterbi_decode(feats=lstm_feats, mask=attention_masks)
+        lstm_feats, attention_masks = self.get_output_score(texts)
+        scores, tag_seq = self.crf._viterbi_decode(feats=lstm_feats, mask=attention_masks.type(torch.bool))
+        # scores, tag_seq = self.crf._viterbi_decode(feats=lstm_feats)
         return tag_seq
     
     def neg_log_likelihood_loss(self, texts, mask, tags):

@@ -127,7 +127,7 @@ class CRF(nn.Module):
             partition, cur_bp = torch.max(cur_values, 1)
             partition_history.append(partition.unsqueeze(-1))
 
-            cur_bp.masked_fill_(mask[idx].view(batch_size, 1).expand(batch_size, tag_size), 0)
+            cur_bp.masked_fill_(mask[idx].view(batch_size, 1).expand(batch_size, tag_size).bool(), 0)
             back_points.append(cur_bp)
 
         partition_history = torch.cat(partition_history).view(
