@@ -14,7 +14,7 @@ class DuplicationDetector:
         self.duplication_info_dir = duplication_info_dir if duplication_info_dir is not None else DefaultConfig.PATHS.DATA_INFO
         self.dup_cleaned_set_dir = dup_cleaned_set_dir if dup_cleaned_set_dir is not None else DefaultConfig.PATHS.DATA_CCF_DBG + "/duplication_cleaned"
         self.duplication_list = []  # list of tuple
-        self.logger = alloc_logger("dup_detector.log", DuplicationDetector, console_output=console_output)
+        self.logger = alloc_logger("detectors.log", DuplicationDetector, console_output=console_output)
 
     def detect(self):
         raw_data_count = len(os.listdir(self.raw_data_set_dir + "/train/data"))

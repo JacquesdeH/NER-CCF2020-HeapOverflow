@@ -12,9 +12,9 @@ class MismatchDetector:
     def __init__(self, mismatch_file_dir: str=None):
         self.mismatch_count = 0
         self.fix_count = 0
-        self.logger = alloc_logger("mismatch_detector.log", MismatchDetector)
+        self.logger = alloc_logger("detectors.log", MismatchDetector)
         self.mismatch_file_dir = mismatch_file_dir if mismatch_file_dir is not None else DefaultConfig.PATHS.DATA_INFO
-        
+        self.reader = LabelFileReader()
         
         """
         {
@@ -40,7 +40,7 @@ class MismatchDetector:
 
     def fix_mismatch(self, data:str, infos:"Iterable[LabelInfo]") -> (str, "List[LabelInfo]"):
         new_data = data.replace('\n', '')
-        reader = LabelFileReader()
+        reader = self.reader
         for no, info in enumerate(infos):
             if new_data[info.Pos_b : info.Pos_e + 1] != info.Privacy:
                 self.mismatch_count += 1

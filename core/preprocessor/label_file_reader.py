@@ -47,7 +47,7 @@ class LabelFileReader:
             new_info = self.loads(line_content)
             if new_info is not None:
                 ret.append(new_info)
-        self.logger.file_message("load():\n", "infos:\t", ret)
+        self.logger.file_message("load():\t", "infos:\t", ret)
         return ret
                 
     def dumps(self, info: LabelInfo):
