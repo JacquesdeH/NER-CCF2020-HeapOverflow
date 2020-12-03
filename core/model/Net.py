@@ -9,7 +9,7 @@ import torch
 import torch.nn as nn
 from transformers import AutoTokenizer, AutoModel
 from keras.preprocessing.sequence import pad_sequences
-from core.model import CRF
+from torchcrf import CRF
 
 
 class Net(nn.Module):
@@ -50,8 +50,7 @@ class Net(nn.Module):
                                  nn.Linear(in_features=self.args.lstm_hidden, out_features=self.args.label_dim),
                                  nn.Sigmoid()).to(self.args.device)
 
-        self.crf = CRF.CRF(target_size=self.args.label_dim, average_batch=True,
-                           use_cuda=self.args.cuda and torch.cuda.is_available())
+        self.crf = CRF(num_tags=self.args.label_dim, batch_first=True).to(self.args.device)
 
     def get_output_score(self, texts: list):
         batch_size = len(texts)
@@ -84,16 +83,21 @@ class Net(nn.Module):
 
     def forward(self, texts: list):
         lstm_feats, attention_masks = self.get_output_score(texts)
-        scores, tag_seq = self.crf._viterbi_decode(feats=lstm_feats, mask=attention_masks.type(torch.bool))
+        tag_seq = self.crf.decode(emissions=lstm_emissions.float(), mask=attention_masks.bool())
         # scores, tag_seq = self.crf._viterbi_decode(feats=lstm_feats)
-        return tag_seq
+        return torch.tensor(tag_seq, dtype=torch.long)
 
-    def neg_log_likelihood_loss(self, texts, mask, tags):
-        lstm_feats, attention_masks = self.get_output_score(texts)
-        loss_value = self.crf.neg_log_likelihood_loss(feats=lstm_feats, mask=attention_masks.type(torch.bool), tags=tags)
-        batch_size = lstm_feats.size(0)
-        loss_value /= float(batch_size)
-        return loss_value
+    def neg_log_likelihood_loss(self, texts, tags):
+        lstm_feats, mask = self.get_output_score(texts)
+        lstm_feats, mask = lstm_feats.transpose(0, 1), mask.transpose(0, 1)
+        tags = tags.transpose(0, 1)
+
+        numerator = self.crf._compute_score(lstm_feats, tags, mask.bool())
+        # shape: (batch_size,)
+        denominator = self.crf._compute_normalizer(lstm_feats, mask.bool())
+        # shape: (batch_size,)
+        llh = numerator - denominator
+        return -llh.sum() / mask.float().sum()
 
 
 if __name__ == '__main__':
