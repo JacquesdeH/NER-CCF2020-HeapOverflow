@@ -6,6 +6,7 @@ import torch.nn as nn
 import os
 from .utils import alloc_logger
 from core.model.Net import Net
+from tqdm import tqdm
 
 
 class TempModule(nn.Module):
@@ -22,11 +23,11 @@ class Instructor:
     def __init__(self, model_name, args):
         self.model_name = model_name
         self.args = args
-        self.model = Net(self.model_name, self.args)
+        self.model = Net(self.model_name, self.args).to(self.args.device)
         pass
 
     def get_loss_fn(self, reduce=None, size_average=None):
-        return nn.CrossEntropyLoss(reduce=reduce, size_average=size_average)
+        return self.model.neg_log_likelihood_loss
 
     def get_optimizer(self, params, lr=1e-3):
         # torch.optim.AdamW
@@ -62,19 +63,23 @@ class Instructor:
         for time in range(n_time):
             total_loss = 0.
             for fold in range(len(k_fold)):
-                for data_content, label_content in k_fold.get_train():
-                    label_predict = self.model(dataloader)
-                    loss = loss_fn(label_predict, label_content)
+                trainloader = k_fold.get_train()
+                for data_content, label_content in tqdm(trainloader):
+                    # label_predict = self.model(data_content)
+                    loss = loss_fn(data_content, None, label_content)
 
                     optimizer.zero_grad()
                     loss.backward()
                     optimizer.step()
+                    print('loss={:}', format(loss.detach().cpu().item()))
 
-                for data_content, label_content in k_fold.get_valid():
+                validloader = k_fold.get_valid()
+                for data_content, label_content in tqdm(validloader):
                     with torch.no_grad():
-                        label_predict = self.model(dataloader)
-                        loss = loss_fn(label_predict, label_content)
+                        # label_predict = self.model(data_content)
+                        loss = loss_fn(data_content, None, label_content)
                         total_loss += loss.sum().item()
+                print('Valid loss={:}'.format(total_loss))
 
                 k_fold.next_fold()
             k_fold.new_k_fold()
