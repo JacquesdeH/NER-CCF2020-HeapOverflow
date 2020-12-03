@@ -27,7 +27,7 @@ class Instructor:
         pass
 
     def get_loss_fn(self, reduce=None, size_average=None):
-        return self.model.neg_log_likelihood_loss
+        return nn.CrossEntropyLoss(reduce=reduce, size_average=size_average)
 
     def get_optimizer(self, params, lr=1e-3):
         # torch.optim.AdamW
@@ -65,8 +65,8 @@ class Instructor:
             for fold in range(len(k_fold)):
                 trainloader = k_fold.get_train()
                 for data_content, label_content in tqdm(trainloader):
-                    # label_predict = self.model(data_content)
-                    loss = loss_fn(data_content, None, label_content)
+                    label_predict = self.model(data_content)
+                    loss = loss_fn(label_predict, label_content)
 
                     optimizer.zero_grad()
                     loss.backward()
@@ -76,8 +76,8 @@ class Instructor:
                 validloader = k_fold.get_valid()
                 for data_content, label_content in tqdm(validloader):
                     with torch.no_grad():
-                        # label_predict = self.model(data_content)
-                        loss = loss_fn(data_content, None, label_content)
+                        label_predict = self.model(data_content)
+                        loss = loss_fn(label_predict, label_content)
                         total_loss += loss.sum().item()
                 print('Valid loss={:}'.format(total_loss))
 
