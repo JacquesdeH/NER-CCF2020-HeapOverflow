@@ -30,7 +30,7 @@ class DefaultConfig:
         LSTM_LAYERS = 2
         LABEL_DIM = 47
         EPOCH = 3
-        LR = 2e-5
+        LR = 1e-4
         N = 1
         K = 10
 
