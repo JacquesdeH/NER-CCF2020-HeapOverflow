@@ -4,6 +4,7 @@ from .dataloader.dataloader import KFold
 import torch
 import torch.nn as nn
 import os
+from .utils import alloc_logger
 
 
 class TempModule(nn.Module):
@@ -21,7 +22,12 @@ def get_loss_fn(reduce=None, size_average=None):
 
 
 def get_optimizer(params, lr=1e-3):
+    # torch.optim.AdamW
     return torch.optim.Adam(params=params, lr=lr)
+
+
+def get_scheduler(optimizer, rate):
+    pass
 
 
 def save_module(module: nn.Module):
@@ -41,16 +47,18 @@ label_content: [batch_size, seq_len]
 
 
 def train(n_time, k_fold):
+    train_log = alloc_logger("train.log", "train")
+    train_log.log_message("train at n_time: %d, k_fold: %d" % (n_time, k_fold))
     dataloader = CCFDataloader()
     module = TempModule()
     loss_fn = get_loss_fn()
     optimizer = get_optimizer(module.parameters())
-    #schedule = torch.optim.lr_scheduler.ExponentialLR(optimizer, 0.5)
+    # schedule = torch.optim.lr_scheduler.ExponentialLR(optimizer, 0.5)
     k_fold = KFold(dataloader=dataloader, k=k_fold)
     loss_history = list()
     for time in range(n_time):
         total_loss = 0.
-        for fold in range(k_fold):
+        for fold in range(len(k_fold)):
             for data_content, label_content in k_fold.get_train():
                 label_predict = module(dataloader)
                 loss = loss_fn(label_predict, label_content)
@@ -67,8 +75,9 @@ def train(n_time, k_fold):
 
             k_fold.next_fold()
         k_fold.new_k_fold()
-        print('total loss: %d' % total_loss)
+        train_log.log_message('total loss: %d' % total_loss)
         loss_history.append(total_loss)
+    return module
 
 
 '''
