@@ -46,10 +46,12 @@ label_content: [batch_size, seq_len]
 '''
 
 
-def train(n_time, k_fold):
+def train(args):
+    n_time = args.n
+    k_fold = args.k
     train_log = alloc_logger("train.log", "train")
     train_log.log_message("train at n_time: %d, k_fold: %d" % (n_time, k_fold))
-    dataloader = CCFDataloader()
+    dataloader = CCFDataloader(args=args, in_train=True)
     module = TempModule()
     loss_fn = get_loss_fn()
     optimizer = get_optimizer(module.parameters())
