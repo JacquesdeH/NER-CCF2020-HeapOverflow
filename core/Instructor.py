@@ -7,6 +7,7 @@ import os
 from .utils import alloc_logger
 from core.model.Net import Net
 from tqdm import tqdm
+from transformers import get_linear_schedule_with_warmup
 
 
 class TempModule(nn.Module):
@@ -33,8 +34,8 @@ class Instructor:
         # torch.optim.AdamW
         return torch.optim.Adam(params=params, lr=lr)
 
-    def get_scheduler(self, optimizer, rate):
-        pass
+    def get_scheduler(self, optimizer, rate, tot_iters):
+        return get_linear_schedule_with_warmup(optimizer, num_warmup_steps=rate*tot_iters, num_training_steps=tot_iters)
 
     def save_module(self):
         print('Saving model...')
@@ -94,14 +95,18 @@ class Instructor:
         #     train_log.log_message('total loss: %d' % total_loss)
         #     loss_history.append(total_loss)
         trainloader = k_fold.get_train()
+        tot_iters = k_fold.get_train_len()
+        scheduler = self.get_scheduler(optimizer, 0.1, tot_iters)
         for data_content, label_content in tqdm(trainloader):
             # label_predict = self.model(data_content)
+            batch_size = len(data_content)
             loss = loss_fn(data_content, label_content)
 
             optimizer.zero_grad()
             loss.backward()
             optimizer.step()
-            print('loss={:}', format(loss.detach().cpu().item()))
+            scheduler.step()
+            print('loss={:}', format(loss.detach().cpu().item()/batch_size))
 
         validloader = k_fold.get_valid()
         cnt_sample = 0
@@ -110,7 +115,7 @@ class Instructor:
             with torch.no_grad():
                 # label_predict = self.model(data_content)
                 loss = loss_fn(data_content, label_content)
-                total_loss += loss.sum().item()
+                total_loss += loss.item()
                 cnt_sample += len(data_content)
         print('==============================================')
         print('Valid loss={:}'.format(total_loss / cnt_sample))

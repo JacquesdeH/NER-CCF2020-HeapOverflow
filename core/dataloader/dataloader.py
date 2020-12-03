@@ -159,6 +159,9 @@ class KFold:
     def get_train(self):
         return Iterator(self.dataloader, self.fold_train)
 
+    def get_train_len(self):
+        return len(self.fold_train)
+
     def get_valid(self):
         return Iterator(self.dataloader, self.fold_valid)
 
