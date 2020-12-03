@@ -8,13 +8,16 @@ import os
 import json
 
 class ResultFormatter:
-    def __init__(self, end='\n'):
+    def __init__(self, split_index_file: str=None, end='\n'):
         super().__init__()
         
         self.logger = alloc_logger("result_formatter.log", ResultFormatter)
         self.end = end
         self.combine_index = {} # origin: (beg, target)
-        with open(os.path.join(DefaultConfig.PATHS.DATA_INFO, "split_index_test.json"), 'r', encoding='utf8') as f:
+        split_index_file = split_index_file if split_index_file is not None else os.path.join(DefaultConfig.PATHS.DATA_INFO, "split_index_test.json")
+        
+        self.logger.log_message("loading split_index from file:\t", split_index_file)
+        with open(split_index_file, 'r', encoding='utf8') as f:
             m = json.load(f)
             for item in m:
                 target = item["target"]
@@ -56,9 +59,9 @@ class ResultFormatter:
                 targets = self.combine_index[i]
                 targets.sort(key=lambda t: t[0])
                 for _, target in targets:
-                    with open(os.path.join(label_dir, "{:d}.json".format(i))) as f:
+                    with open(os.path.join(label_dir, "{:d}.json".format(target)), 'r', encoding='utf8') as f:
                         new_labels = json.load(f)
-                    with open(os.path.join(data_dir, "{:d}.txt".format(i))) as f:
+                    with open(os.path.join(data_dir, "{:d}.txt".format(target)), 'r', encoding='utf8') as f:
                         new_data = f.read()
                     labels += new_labels
                     data += new_data
@@ -68,11 +71,15 @@ class ResultFormatter:
                 output_csv.write(string + self.end)
         output_csv.close()
 
-    def trans_origin_to_raw(self):
+    def trans_origin_to_raw(self, data_dir: str=None):
+        signature = "trans_origin_to_raw()\t"
+
         input_csv = open(os.path.join(DefaultConfig.PATHS.DATA_INFO, "predict_origin.csv"), 'r', encoding='utf8')
         output_csv = open(os.path.join(DefaultConfig.PATHS.DATA_INFO, "predict.csv"), 'w', encoding='utf8')
 
         reader = LabelFileReader()
+
+        data_dir = data_dir if data_dir is not None else os.path.join(DefaultConfig.PATHS.DATA_CCF_RAW, "test")
 
         for line in input_csv.readlines():
             info = reader.loads(line)
@@ -80,9 +87,18 @@ class ResultFormatter:
             beg = info.Pos_b
             end = info.Pos_e
             ID = info.ID
-            with open(os.path.join(DefaultConfig.PATHS.DATA_CCF_RAW, "/test/{:d}.txt".format(ID))) as f:
+            with open(os.path.join(data_dir, "{:d}.txt".format(ID)), 'r', encoding='utf8') as f:
                 raw_content = f.read()
-            new_beg = raw_content.find(content, beg - 5, end + 5)
+            new_beg = raw_content.find(content, max(beg - 5, 0), min(end + 5, len(raw_content)))
+            if new_beg < 0:
+                self.logger.log_message(signature, "in:\t", content in raw_content)
+                # print(max(beg - 5, 0))
+                # print(min(end + 5, len(raw_content)))
+                print(len(raw_content))
+                # self.logger.log_message(signature, "content:\t", content)
+                self.logger.log_message(signature, "raw_content:\t", raw_content)
+                self.logger.log_message(signature, "content not found in raw:\t", reader.dumps(info))
+                continue
             new_end = new_beg + end - beg
             new_info = LabelInfo(
                 ID = ID,
@@ -98,9 +114,12 @@ class ResultFormatter:
         output_csv.close()
 
 if __name__ == "__main__":
+    # formatter = ResultFormatter(os.path.join(DefaultConfig.PATHS.DATA_INFO, "split_index_train.json"))
+    # formatter.combine_all(
+    #    origin_data_count=2515, 
+    #    label_dir=os.path.join(DefaultConfig.PATHS.DATA_CCF_CLEANED, "train/label"),
+    #    data_dir=os.path.join(DefaultConfig.PATHS.DATA_CCF_CLEANED, "train/data"))
+    # formatter.trans_origin_to_raw(data_dir=os.path.join(DefaultConfig.PATHS.DATA_CCF_RAW, "train/data"))
     formatter = ResultFormatter()
-    formatter.combine_all(
-        origin_data_count=2515, 
-        label_dir=os.path.join(DefaultConfig.PATHS.DATA_CCF_CLEANED, "train/label"),
-        data_dir=os.path.join(DefaultConfig.PATHS.DATA_CCF_CLEANED, "train/data"))
+    formatter.combine_all()
     formatter.trans_origin_to_raw()
