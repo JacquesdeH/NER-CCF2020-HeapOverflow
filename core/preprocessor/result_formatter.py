@@ -48,24 +48,24 @@ class ResultFormatter:
 
         for i in range(origin_data_count):
             # labels = None
-            with open(os.path.join(label_dir, "{:d}.json".format(i))) as f:
+            with open(os.path.join(label_dir, "{:d}.json".format(i)), 'r', encoding='utf8') as f:
                 labels = json.load(f)
-            with open(os.path.join(data_dir, "{:d}.txt".format(i))) as f:
+            with open(os.path.join(data_dir, "{:d}.txt".format(i)), 'r', encoding='utf8') as f:
                 data = f.read()
             if i in self.combine_index.keys():
                 targets = self.combine_index[i]
                 targets.sort(key=lambda t: t[0])
                 for _, target in targets:
-                    with open(os.path.join(DefaultConfig.PATHS.DATA_CCF_CLEANED, "test/label/{:d}.json".format(i))) as f:
+                    with open(os.path.join(label_dir, "{:d}.json".format(i))) as f:
                         new_labels = json.load(f)
-                    with open(os.path.join(DefaultConfig.PATHS.DATA_CCF_CLEANED, "test/data/{:d}.txt".format(i))) as f:
+                    with open(os.path.join(data_dir, "{:d}.txt".format(i))) as f:
                         new_data = f.read()
                     labels += new_labels
                     data += new_data
-            infos = label_formatter.integer_list_label_and_data_to_infos(id=i, integer_list=labels, data = data)
+            infos = label_formatter.integer_list_label_and_data_to_infos(ID=i, integer_list=labels, data = data)
             for info in infos:
                 string = reader.dumps(info)
-                output_csv.write(string + end)
+                output_csv.write(string + self.end)
         output_csv.close()
 
     def trans_origin_to_raw(self):
@@ -92,7 +92,7 @@ class ResultFormatter:
                 Privacy = content
             )
             new_line = reader.dumps(new_info)
-            output_csv.write(new_line + end)
+            output_csv.write(new_line + self.end)
 
         input_csv.close()
         output_csv.close()

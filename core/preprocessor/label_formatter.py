@@ -89,7 +89,7 @@ class LabelFormatter:
         label_list = [None] * len(integer_list)
         ret = []
         for i in range(len(integer_list)):
-            label_list[i] = self.transformer.integer_to_integer_to_label(integer_list[i])
+            label_list[i] = self.transformer.integer_to_label(integer_list[i])
 
         reading = False
         name = ""
