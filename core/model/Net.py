@@ -47,12 +47,12 @@ class Net(nn.Module):
                                  nn.Linear(in_features=self.args.lstm_hidden, out_features=self.args.lstm_hidden),
                                  # nn.BatchNorm
                                  nn.ReLU(),
-                                 nn.Linear(in_features=self.args.lstm_hidden, out_features=self.args.label_dim + 2),
+                                 nn.Linear(in_features=self.args.lstm_hidden, out_features=self.args.label_dim),
                                  nn.Sigmoid()).to(self.args.device)
 
         self.crf = CRF(num_tags=self.args.label_dim, batch_first=True).to(self.args.device)
 
-    def forward(self, texts: list):
+    def get_output_score(self, texts: list):
         batch_size = len(texts)
         input_ids = [self.tokenizer.encode(text, add_special_tokens=True, max_length=self.args.seq_len, truncation=True)
                      for text in texts]
@@ -79,23 +79,25 @@ class Net(nn.Module):
 
         lstm_emissions = fc2_out.contiguous().view(batch_size, self.args.seq_len, -1)
         # lstm_emissions -> [batch, seq_len, label_dim + 2]
-        _, tag_seq = self.crf._viterbi_decode(feats=lstm_feats, mask=attention_masks.type(torch.bool))
+        return lstm_emissions, attention_masks
+
+    def forward(self, texts: list):
+        lstm_feats, attention_masks = self.get_output_score(texts)
+        tag_seq = self.crf.decode(emissions=lstm_emissions.float(), mask=attention_masks.bool())
         # scores, tag_seq = self.crf._viterbi_decode(feats=lstm_feats)
-        return tag_seq
-#         return lstm_emissions, attention_masks
+        return torch.tensor(tag_seq, dtype=torch.long)
 
-#     def forward(self, texts: list):
-#         lstm_feats, attention_masks = self.get_output_score(texts)
-#         scores, tag_seq = self.crf._viterbi_decode(feats=lstm_feats, mask=attention_masks.type(torch.bool))
-#         # scores, tag_seq = self.crf._viterbi_decode(feats=lstm_feats)
-#         return tag_seq
+    def neg_log_likelihood_loss(self, texts, tags):
+        lstm_feats, mask = self.get_output_score(texts)
+        lstm_feats, mask = lstm_feats.transpose(0, 1), mask.transpose(0, 1)
+        tags = tags.transpose(0, 1)
 
-#     def neg_log_likelihood_loss(self, texts, mask, tags):
-#         lstm_feats, attention_masks = self.get_output_score(texts)
-#         loss_value = self.crf.neg_log_likelihood_loss(feats=lstm_feats, mask=attention_masks.type(torch.bool), tags=tags)
-#         batch_size = lstm_feats.size(0)
-#         loss_value /= float(batch_size)
-#         return loss_value
+        numerator = self.crf._compute_score(lstm_feats, tags, mask.bool())
+        # shape: (batch_size,)
+        denominator = self.crf._compute_normalizer(lstm_feats, mask.bool())
+        # shape: (batch_size,)
+        llh = numerator - denominator
+        return -llh.sum() / mask.float().sum()
 
 
 if __name__ == '__main__':

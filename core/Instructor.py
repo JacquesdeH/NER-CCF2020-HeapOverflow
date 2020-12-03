@@ -27,7 +27,7 @@ class Instructor:
         pass
 
     def get_loss_fn(self, reduce=None, size_average=None):
-        return nn.CrossEntropyLoss(reduce=reduce, size_average=size_average)
+        return self.model.neg_log_likelihood_loss
 
     def get_optimizer(self, params, lr=1e-3):
         # torch.optim.AdamW
@@ -60,29 +60,54 @@ class Instructor:
         # schedule = torch.optim.lr_scheduler.ExponentialLR(optimizer, 0.5)
         k_fold = KFold(dataloader=dataloader, k=k_fold)
         loss_history = list()
-        for time in range(n_time):
-            total_loss = 0.
-            for fold in range(len(k_fold)):
-                trainloader = k_fold.get_train()
-                for data_content, label_content in tqdm(trainloader):
-                    label_predict = self.model(data_content)
-                    loss = loss_fn(label_predict, label_content)
+        # for time in range(n_time):
+        #     total_loss = 0.
+        #     for fold in range(len(k_fold)):
+        #         trainloader = k_fold.get_train()
+        #         for data_content, label_content in tqdm(trainloader):
+        #             # label_predict = self.model(data_content)
+        #             loss = loss_fn(data_content, label_content)
+        #
+        #             optimizer.zero_grad()
+        #             loss.backward()
+        #             optimizer.step()
+        #             print('loss={:}', format(loss.detach().cpu().item()))
+        #
+        #         validloader = k_fold.get_valid()
+        #         cnt_sample = 0
+        #         for data_content, label_content in tqdm(validloader):
+        #             with torch.no_grad():
+        #                 # label_predict = self.model(data_content)
+        #                 loss = loss_fn(data_content, label_content)
+        #                 total_loss += loss.sum().item()
+        #                 cnt_sample += len(data_content)
+        #         print('==============================================')
+        #         print('Valid loss={:}'.format(total_loss/cnt_sample))
+        #         print('==============================================')
+        #
+        #         k_fold.next_fold()
+        #     k_fold.new_k_fold()
+        #     train_log.log_message('total loss: %d' % total_loss)
+        #     loss_history.append(total_loss)
+        trainloader = k_fold.get_train()
+        for data_content, label_content in tqdm(trainloader):
+            # label_predict = self.model(data_content)
+            loss = loss_fn(data_content, label_content)
 
-                    optimizer.zero_grad()
-                    loss.backward()
-                    optimizer.step()
-                    print('loss={:}', format(loss.detach().cpu().item()))
+            optimizer.zero_grad()
+            loss.backward()
+            optimizer.step()
+            print('loss={:}', format(loss.detach().cpu().item()))
 
-                validloader = k_fold.get_valid()
-                for data_content, label_content in tqdm(validloader):
-                    with torch.no_grad():
-                        label_predict = self.model(data_content)
-                        loss = loss_fn(label_predict, label_content)
-                        total_loss += loss.sum().item()
-                print('Valid loss={:}'.format(total_loss))
-
-                k_fold.next_fold()
-            k_fold.new_k_fold()
-            train_log.log_message('total loss: %d' % total_loss)
-            loss_history.append(total_loss)
-
+        validloader = k_fold.get_valid()
+        cnt_sample = 0
+        total_loss = 0.
+        for data_content, label_content in tqdm(validloader):
+            with torch.no_grad():
+                # label_predict = self.model(data_content)
+                loss = loss_fn(data_content, label_content)
+                total_loss += loss.sum().item()
+                cnt_sample += len(data_content)
+        print('==============================================')
+        print('Valid loss={:}'.format(total_loss / cnt_sample))
+        print('==============================================')
