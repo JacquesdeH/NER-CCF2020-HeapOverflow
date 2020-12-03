@@ -36,12 +36,16 @@ class Instructor:
     def get_scheduler(self, optimizer, rate):
         pass
 
-    def save_module(self, module: nn.Module):
-        os.makedirs(config.PATHS.DATA_MODULE)
-        torch.save(module.state_dict(), config.PATHS.DATA_MODULE + "/module.th")
+    def save_module(self):
+        print('Saving model...')
+        mdl_path = os.path.join(config.PATHS.CKPT, self.model_name)
+        torch.save(self.model.state_dict(), mdl_path)
+        print('Successfully saved model.')
 
-    def load_module(self, module: nn.Module):
-        module.load_state_dict(torch.load(config.PATHS.DATA_MODULE + 'module.th'))
+    def load_module(self):
+        mdl_path = os.path.join(config.PATHS.CKPT, self.model_name)
+        self.model.load_state_dict(torch.load(mdl_path))
+        print('Loaded from trained model.')
 
     '''
     return batch_size and learning_rate
