@@ -32,7 +32,7 @@ class DefaultConfig:
         EPOCH = 3
         LR = 1e-4
         N = 1
-        K = 10
+        K = 4
 
     class LOG:
         DEFAULT_LOG_DIR = "default.log"

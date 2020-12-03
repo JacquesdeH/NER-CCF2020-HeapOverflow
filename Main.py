@@ -32,3 +32,4 @@ if __name__ == '__main__':
     instructor = Instructor.Instructor('Version2', args)
     instructor.train()
     instructor.save_module()
+

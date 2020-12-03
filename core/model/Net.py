@@ -75,10 +75,10 @@ class Net(nn.Module):
         lstm_out = lstm_out.contiguous().view(-1, self.lstm_directs * self.args.lstm_hidden)
         fc1_out = self.fc1(lstm_out)
         fc2_out = self.fc2(self.dropout(fc1_out))
-        # fc2_out -> [batch * seq_len, label_dim + 2]
+        # fc2_out -> [batch * seq_len, label_dim]
 
         lstm_emissions = fc2_out.contiguous().view(batch_size, self.args.seq_len, -1)
-        # lstm_emissions -> [batch, seq_len, label_dim + 2]
+        # lstm_emissions -> [batch, seq_len, label_dim]
         return lstm_emissions, attention_masks
 
     def forward(self, texts: list):

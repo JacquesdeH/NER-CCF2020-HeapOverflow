@@ -56,6 +56,9 @@ class LabelFormatter:
 
         self.transformer = LabelTrasformer(label_set)
         return self.transformer
+
+    def load_transformer_from_file(self, file_name: str=None):
+        self.transformer = LabelTrasformer.load_from_file(file_name)
                     
 
     def infos_to_integer_list_label(self, infos: "Iterable[LabelInfo]", length: int) -> "List[int]":
@@ -81,6 +84,56 @@ class LabelFormatter:
                     continue
                 lst[i] = m_sym                  # 标记名词短语的中间部分
         return lst
+
+    def integer_list_label_and_data_to_infos(self, ID: int, integer_list:"Iterable[int]", data:str) -> "List[LabelIndo]":
+        label_list = [None] * len(integer_list)
+        ret = []
+        for i in range(len(integer_list)):
+            label_list[i] = self.transformer.integer_to_label(integer_list[i])
+
+        reading = False
+        name = ""
+        beg = 0
+        for row, label in enumerate(label_list):
+            if reading:
+                if label.type == LabelType.E and label.name == name:
+                    new_info = LabelInfo(
+                        ID = ID,
+                        Category = name,
+                        Pos_b = beg,
+                        Pos_e = row,
+                        Privacy = data[beg: row+1]
+                        )
+                    ret.append(new_info)
+                    continue
+                if label.type == LabelType.M and label.name == name:
+                    continue
+                if label.type == LabelType.B:
+                    name = label.name
+                    beg = row
+                    continue
+                reading = False
+            else:
+                # ! reading
+                if label.type == LabelType.B:
+                    name = label.name
+                    beg = row
+                    reading = True
+                    continue
+                if label.type == LabelType.S:
+                    new_info = LabelInfo(
+                        ID = ID,
+                        Category = label.name,
+                        Pos_b = row,
+                        Pos_e = row,
+                        Privacy = data[row: row+1]
+                    )
+                    ret.append(new_info)
+                    reading = False
+                    continue
+                reading = False
+        return ret
+
 
     def infos_to_str_list_label(self, infos: "Iterable[LabelInfo]", length: int) -> "List[str]":
         lst = ["O"] * length

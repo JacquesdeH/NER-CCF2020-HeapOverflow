@@ -59,10 +59,10 @@ class LabelTrasformer:
 
         
         ret = LabelTrasformer([])
-        with open(table_file_name, 'w', encoding='utf8') as f:
+        with open(table_file_name, 'r', encoding='utf8') as f:
             save_label_table = json.load(f)
             ret.logger.log_message("load label table from file [", table_file_name, ']')
-        with open(map_file_name, 'w', encoding='utf8') as f:
+        with open(map_file_name, 'r', encoding='utf8') as f:
             save_label_index = json.load(f)
             ret.logger.log_message("load trans map from file [", map_file_name, ']')
         
