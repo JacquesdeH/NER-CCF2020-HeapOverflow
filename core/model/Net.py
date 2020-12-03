@@ -9,7 +9,7 @@ import torch
 import torch.nn as nn
 from transformers import AutoTokenizer, AutoModel
 from keras.preprocessing.sequence import pad_sequences
-from core.model import CRF
+from torchcrf import CRF
 
 
 class Net(nn.Module):
@@ -50,10 +50,9 @@ class Net(nn.Module):
                                  nn.Linear(in_features=self.args.lstm_hidden, out_features=self.args.label_dim + 2),
                                  nn.Sigmoid()).to(self.args.device)
 
-        self.crf = CRF.CRF(target_size=self.args.label_dim, average_batch=True,
-                           use_cuda=self.args.cuda and torch.cuda.is_available())
+        self.crf = CRF(num_tags=self.args.label_dim, batch_first=True).to(self.args.device)
 
-    def get_output_score(self, texts: list):
+    def forward(self, texts: list):
         batch_size = len(texts)
         input_ids = [self.tokenizer.encode(text, add_special_tokens=True, max_length=self.args.seq_len, truncation=True)
                      for text in texts]
@@ -80,20 +79,23 @@ class Net(nn.Module):
 
         lstm_emissions = fc2_out.contiguous().view(batch_size, self.args.seq_len, -1)
         # lstm_emissions -> [batch, seq_len, label_dim + 2]
-        return lstm_emissions, attention_masks
-
-    def forward(self, texts: list):
-        lstm_feats, attention_masks = self.get_output_score(texts)
-        scores, tag_seq = self.crf._viterbi_decode(feats=lstm_feats, mask=attention_masks.type(torch.bool))
+        _, tag_seq = self.crf._viterbi_decode(feats=lstm_feats, mask=attention_masks.type(torch.bool))
         # scores, tag_seq = self.crf._viterbi_decode(feats=lstm_feats)
         return tag_seq
+#         return lstm_emissions, attention_masks
 
-    def neg_log_likelihood_loss(self, texts, mask, tags):
-        lstm_feats, attention_masks = self.get_output_score(texts)
-        loss_value = self.crf.neg_log_likelihood_loss(feats=lstm_feats, mask=attention_masks.type(torch.bool), tags=tags)
-        batch_size = lstm_feats.size(0)
-        loss_value /= float(batch_size)
-        return loss_value
+#     def forward(self, texts: list):
+#         lstm_feats, attention_masks = self.get_output_score(texts)
+#         scores, tag_seq = self.crf._viterbi_decode(feats=lstm_feats, mask=attention_masks.type(torch.bool))
+#         # scores, tag_seq = self.crf._viterbi_decode(feats=lstm_feats)
+#         return tag_seq
+
+#     def neg_log_likelihood_loss(self, texts, mask, tags):
+#         lstm_feats, attention_masks = self.get_output_score(texts)
+#         loss_value = self.crf.neg_log_likelihood_loss(feats=lstm_feats, mask=attention_masks.type(torch.bool), tags=tags)
+#         batch_size = lstm_feats.size(0)
+#         loss_value /= float(batch_size)
+#         return loss_value
 
 
 if __name__ == '__main__':
