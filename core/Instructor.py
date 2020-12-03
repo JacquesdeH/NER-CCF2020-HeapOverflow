@@ -77,6 +77,7 @@ def train(n_time, k_fold):
         k_fold.new_k_fold()
         train_log.log_message('total loss: %d' % total_loss)
         loss_history.append(total_loss)
+    return module
 
 
 '''
