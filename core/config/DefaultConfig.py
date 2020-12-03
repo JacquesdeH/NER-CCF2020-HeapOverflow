@@ -32,6 +32,8 @@ class DefaultConfig:
         LABEL_DIM = 47
         EPOCH = 3
         LR = 1e-3
+        N = 1
+        K = 10
 
 
     class LOG:

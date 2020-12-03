@@ -17,6 +17,9 @@ parser.add_argument('--lstm_directs', default=config.HYPER.LSTM_DIRECTS, type=in
 parser.add_argument('--label_dim', default=config.HYPER.LABEL_DIM)
 parser.add_argument('--epoch', default=config.HYPER.EPOCH)
 parser.add_argument('--lr', default=config.HYPER.LR)
+parser.add_argument('--n', default=config.HYPER.N)
+parser.add_argument('--k', default=config.HYPER.K)
+
 
 args = parser.parse_args()
 
