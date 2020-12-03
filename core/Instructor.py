@@ -36,12 +36,12 @@ class Instructor:
     def get_scheduler(self, optimizer, rate):
         pass
 
-    def save_module(self, module: nn.Module):
+    def save_module(self):
         os.makedirs(config.PATHS.DATA_MODULE)
-        torch.save(module.state_dict(), config.PATHS.DATA_MODULE + "/module.th")
+        torch.save(module.state_dict(), os.path.join(config.PATHS.DATA_MODULE, self.model_name))
 
-    def load_module(self, module: nn.Module):
-        module.load_state_dict(torch.load(config.PATHS.DATA_MODULE + 'module.th'))
+    def load_module(self):
+        module.load_state_dict(torch.load(os.path.join(config.PATHS.DATA_MODULE, self.model_name)))
 
     '''
     return batch_size and learning_rate
@@ -60,29 +60,48 @@ class Instructor:
         # schedule = torch.optim.lr_scheduler.ExponentialLR(optimizer, 0.5)
         k_fold = KFold(dataloader=dataloader, k=k_fold)
         loss_history = list()
-        for time in range(n_time):
-            total_loss = 0.
-            for fold in range(len(k_fold)):
-                trainloader = k_fold.get_train()
-                for data_content, label_content in tqdm(trainloader):
-                    # label_predict = self.model(data_content)
-                    loss = loss_fn(data_content, None, label_content)
+        # for time in range(n_time):
+        #     for fold in range(len(k_fold)):
+        #         trainloader = k_fold.get_train()
+        #         for data_content, label_content in tqdm(trainloader):
+        #             # label_predict = self.model(data_content)
+        #             loss = loss_fn(data_content, None, label_content)
+        #
+        #             optimizer.zero_grad()
+        #             loss.backward()
+        #             optimizer.step()
+        #             print('loss={:}'.format(loss.detach().cpu().item()))
+        #
+        #         validloader = k_fold.get_valid()
+        #         valid_cnt = 0
+        #         valid_loss = 0.
+        #         for data_content, label_content in tqdm(validloader):
+        #             valid_cnt += data_content.__len__()
+        #             with torch.no_grad():
+        #                 # label_predict = self.model(data_content)
+        #                 loss = loss_fn(data_content, None, label_content)
+        #                 valid_loss += loss.sum().item()
+        #         print('Valid loss={:}'.format(valid_loss/valid_cnt))
+        #         k_fold.next_fold()
+        #     k_fold.new_k_fold()
+        #     train_log.log_message('total loss: %d' % total_loss)
+        #     loss_history.append(total_loss)
+        trainloader = k_fold.get_train()
+        for data_content, label_content in tqdm(trainloader):
+            # label_predict = self.model(data_content)
+            loss = loss_fn(data_content, None, label_content)
+            optimizer.zero_grad()
+            loss.backward()
+            optimizer.step()
+            print('loss={:}'.format(loss.detach().cpu().item()))
 
-                    optimizer.zero_grad()
-                    loss.backward()
-                    optimizer.step()
-                    print('loss={:}', format(loss.detach().cpu().item()))
-
-                validloader = k_fold.get_valid()
-                for data_content, label_content in tqdm(validloader):
-                    with torch.no_grad():
-                        # label_predict = self.model(data_content)
-                        loss = loss_fn(data_content, None, label_content)
-                        total_loss += loss.sum().item()
-                print('Valid loss={:}'.format(total_loss))
-
-                k_fold.next_fold()
-            k_fold.new_k_fold()
-            train_log.log_message('total loss: %d' % total_loss)
-            loss_history.append(total_loss)
-
+        validloader = k_fold.get_valid()
+        valid_cnt = 0
+        valid_loss = 0.
+        for data_content, label_content in tqdm(validloader):
+            valid_cnt += data_content.__len__()
+            with torch.no_grad():
+                # label_predict = self.model(data_content)
+                loss = loss_fn(data_content, None, label_content)
+                valid_loss += loss.sum().item()
+            print('Valid loss={:}'.format(valid_loss / valid_cnt))

@@ -35,8 +35,8 @@ class CRF(nn.Module):
             self.__setattr__(k, kwargs[k])
         self.START_TAG_IDX, self.END_TAG_IDX = -2, -1
 
-        # init_transitions = torch.zeros(self.target_size+2, self.target_size+2)
-        init_transitions = torch.ones(self.target_size +2, self.target_size +2) * 1/(self.target_size +2)
+        # init_transitions = torch.zeros(self.target_size, self.target_size)
+        init_transitions = torch.ones(self.target_size, self.target_size) * 1 / self.target_size
 
         init_transitions[:, self.START_TAG_IDX] = -1000.
         init_transitions[self.END_TAG_IDX, :] = -1000.
@@ -49,7 +49,7 @@ class CRF(nn.Module):
         """
         Do the forward algorithm to compute the partition function (batched).
         Args:
-            feats: size=(batch_size, seq_len, self.target_size+2)
+            feats: size=(batch_size, seq_len, self.target_size)
             mask: size=(batch_size, seq_len)
         Returns:
             xxx
@@ -92,7 +92,7 @@ class CRF(nn.Module):
     def _viterbi_decode(self, feats, mask=None):
         """
         Args:
-            feats: size=(batch_size, seq_len, self.target_size+2)
+            feats: size=(batch_size, seq_len, self.target_size)
             mask: size=(batch_size, seq_len)
         Returns:
             decode_idx: (batch_size, seq_len), viterbi decode结果
