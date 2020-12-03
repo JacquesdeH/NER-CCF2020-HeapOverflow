@@ -12,7 +12,6 @@ from Main import args
 from tqdm import tqdm
 
 
-
 class TempModule(nn.Module):
     def __init__(self):
         super(TempModule, self).__init__()
@@ -89,27 +88,4 @@ class Instructor:
             k_fold.new_k_fold()
             train_log.log_message('total loss: %d' % total_loss)
             loss_history.append(total_loss)
-
-
-    def test(self, args, module):
-        with torch.no_grad():
-            dataloader = CCFDataloader(args=args, in_train=False)
-            file_count = 0
-            for data_contents in dataloader:
-                predicts = module(data_contents)
-                predicts = predicts.cpu()   #[batch_size, seq_len, label_dim]
-                for predict_count in range(predicts.shape[0]):
-                    predict = predicts[predict_count]
-                    result = list()
-                    for col_num in range(predict.shape[0]):
-                        col = predict[col_num]
-                        result.append(col.argmax().item())
-                    with open(os.path.join(config.PATHS.DATA_CCF_CLEANED,'test/label/%d.json' % (file_count + predict_count)),'w') as fw:
-                        json.dump(result, fw)
-                file_count += predicts.shape[0]
-
-
-if __name__ == '__main__':
-    insructor = Instructor("a", args=args)
-    insructor.test(args=args, module=TempModule())
 
