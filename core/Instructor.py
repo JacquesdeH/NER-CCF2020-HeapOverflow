@@ -83,6 +83,7 @@ class Instructor:
             train_log.log_message('total loss: %d' % total_loss)
             loss_history.append(total_loss)
 
+
     def test(self, args, module):
         with torch.no_grad():
             dataloader = CCFDataloader(args=args, in_train=False)
@@ -104,3 +105,4 @@ class Instructor:
 if __name__ == '__main__':
     insructor = Instructor("a", args=args)
     insructor.test(args=args, module=TempModule())
+

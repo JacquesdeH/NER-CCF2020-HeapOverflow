@@ -2,6 +2,7 @@ import argparse
 import torch
 
 from core.config.DefaultConfig import DefaultConfig as config
+from core import Instructor
 
 
 parser = argparse.ArgumentParser()
@@ -24,3 +25,7 @@ parser.add_argument('--k', default=config.HYPER.K)
 args = parser.parse_args()
 
 args.device = torch.device('cuda' if args.cuda and torch.cuda.is_available() else 'cpu')
+
+if __name__ == '__main__':
+    instructor = Instructor.Instructor('Baseline', args)
+    instructor.train()
