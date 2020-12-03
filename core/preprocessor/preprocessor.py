@@ -69,8 +69,8 @@ class Preprocessor:
             if max_size is not None:
                 divide_result = divider.detect_division(data)
                 if len(divide_result) > 1:
-                    self.logger.log_message(signature, "[{:d}]\tdata length={:d}".format(i, len(data)))
-                    self.logger.log_message(signature, "[{:d}]\tdivide points:\t".format(i), divide_result)
+                    self.logger.log_message(signature, "[{:d}]\tlen={:d}".format(i, len(data)))
+                    # self.logger.log_message(signature, "[{:d}]\tdivide points:\t".format(i), divide_result)
                 for j in range(len(divide_result)):
                     beg = divide_result[j]
                     end = divide_result[j + 1] if j < len(divide_result) - 1 else -1
@@ -78,8 +78,9 @@ class Preprocessor:
                     if j != 0:
                         target = alloc_file_num
                         alloc_file_num += 1
-                        self.logger.log_message(signature, "[{:d}]\t".format(i), "({:d}:{:d})->[{:d}]".format(beg, end, target))
                         divide_index.append({"target": target, "origin":i, "beg":beg})
+                    if len(divide_result) > 1:
+                        self.logger.log_message(signature, "[{:d}]\t".format(i), "({:3d}:{:3d})->[{:d}]".format(beg, end, target))
                     with open(self.target_dir + "/train/data/{:d}.txt".format(target), 'w', encoding='utf8') as f:
                         f.write(data[beg: end])
                     with open(self.target_dir + "/train/label/{:d}.json".format(target), 'w', encoding='utf8') as f:
@@ -134,8 +135,8 @@ class Preprocessor:
             if max_size is not None:
                 divide_result = divider.detect_division(data)
                 if len(divide_result) > 1:
-                    self.logger.log_message(signature, "[{:d}]\tdata length={:d}".format(i, len(data)))
-                    self.logger.log_message(signature, "[{:d}]\tdivide points:\t".format(i), divide_result)
+                    self.logger.log_message(signature, "[{:d}]\tlen={:d}".format(i, len(data)))
+                    # self.logger.log_message(signature, "[{:d}]\tdivide points:\t".format(i), divide_result)
                 for j in range(len(divide_result)):
                     beg = divide_result[j]
                     end = divide_result[j + 1] if j < len(divide_result) - 1 else -1
@@ -143,8 +144,9 @@ class Preprocessor:
                     if j != 0:
                         target = alloc_file_num
                         alloc_file_num += 1
-                        self.logger.log_message(signature, "[{:d}]\t".format(i), "({:d}:{:d})->[{:d}]".format(beg, end, target))
                         divide_index.append({"target": target, "origin":i, "beg":beg})
+                    if len(divide_result) > 1:
+                        self.logger.log_message(signature, "[{:d}]\t".format(i), "({:3d}:{:3d})->[{:d}]".format(beg, end, target))
                     with open(self.target_dir + "/test/data/{:d}.txt".format(target), 'w', encoding='utf8') as f:
                         f.write(data[beg: end])
 

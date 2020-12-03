@@ -17,7 +17,7 @@ LabelInfo = namedtuple("LabelInfo", ["ID", "Category", "Pos_b", "Pos_e", "Privac
 class LabelFileReader:
     def __init__(self):
         self.csv_re = re.compile(r"^(\d+),(\w+),(\d+),(\d+),(.+)$")
-        self.logger = alloc_logger("preprocessor.log", default_head=LabelFileReader)
+        self.logger = alloc_logger("label_file_reader.log", default_head=LabelFileReader)
     
     def loads(self, line_content) -> LabelInfo:
         m = self.csv_re.match(line_content)
@@ -47,7 +47,7 @@ class LabelFileReader:
             new_info = self.loads(line_content)
             if new_info is not None:
                 ret.append(new_info)
-        self.logger.file_message("load():\n", "infos:\t", ret)
+        self.logger.file_message("load():\t", "infos:\t", ret)
         return ret
                 
     def dumps(self, info: LabelInfo):

@@ -19,7 +19,7 @@ class LabelFormatter:
         self.data_dir    = data_dir   if data_dir   is not None else DefaultConfig.PATHS.DATA_CCF_RAW + "/train/data"
         self.label_dir   = label_dir  if label_dir  is not None else DefaultConfig.PATHS.DATA_CCF_RAW + "/train/label"
         self.target_dir  = target_dir if target_dir is not None else DefaultConfig.PATHS.DATA_CCF_FMT + "/label"
-        self.logger = alloc_logger("preprocessor.log", LabelFormatter,console_output=console_output)
+        self.logger = alloc_logger("label_utils.log", LabelFormatter,console_output=console_output)
         self.logger.log_message("creating - - - - - - - - - - - - - - - - - - -")
         self.logger.log_message("data_dir=", self.data_dir)
         self.logger.log_message("label_dir=", self.label_dir)

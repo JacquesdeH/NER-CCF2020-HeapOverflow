@@ -12,7 +12,7 @@ class MismatchDetector:
     def __init__(self, mismatch_file_dir: str=None):
         self.mismatch_count = 0
         self.fix_count = 0
-        self.logger = alloc_logger("preprocessor.log", MismatchDetector)
+        self.logger = alloc_logger("detectors.log", MismatchDetector)
         self.mismatch_file_dir = mismatch_file_dir if mismatch_file_dir is not None else DefaultConfig.PATHS.DATA_INFO
         self.reader = LabelFileReader()
         

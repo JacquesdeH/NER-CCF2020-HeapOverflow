@@ -20,7 +20,7 @@ class LabelTrasformer:
         self.label_table = []
         self.label_index = {}        # k=label: BMESOLabel, v=index: int
 
-        self.logger = alloc_logger("preprocessor.log",LabelTrasformer)
+        self.logger = alloc_logger("label_utils.log",LabelTrasformer)
         self.logger.log_message("init(): build index:")
 
         _set = set(possible_labels)

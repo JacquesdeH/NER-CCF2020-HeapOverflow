@@ -36,11 +36,11 @@ class Logger:
         if log_file_name in file_pool:
             self._log_file = file_pool[log_file_name][0] 
             file_pool[log_file_name][1] += 1
-            print("using log_file in pool [", log_file_name, ']')
+            # print("using log_file in pool [", log_file_name, ']')
         else:
             self._log_file = open(os.path.join(DefaultConfig.PATHS.LOG, log_file_name), 'a', encoding='utf8')
             file_pool[log_file_name] = [self._log_file, 1]
-            print("opening new log_file [", log_file_name, ']')
+            # print("opening new log_file [", log_file_name, ']')
 
         self._log_file_name = log_file_name
         self.console_output = console_output
@@ -48,25 +48,24 @@ class Logger:
         self._default_signature = self.format_signature(default_head) if default_head is not None else None
 
     def __del__(self):
-        self.file_message("", need_total=False)
-        self.file_message("", need_total=False)
-        self.file_message("", need_total=False)
+        # print("deleting logger [file=", self._log_file_name, ", head=", self._default_signature, "]")
 
         global file_pool
         file_pool[self._log_file_name][1] -= 1
         if file_pool[self._log_file_name][1] == 0:
+            self._log_file.write("\n\n\n")
             self._log_file.close()
-            print("closing log_file [", self._log_file_name, ']')
+            # print("closing log_file [", self._log_file_name, ']')
             del file_pool[self._log_file_name]
 
         # 解除全局日志文件的引用
         global total_file_reference
         global total_file
-        print("deleting logger [file=", self._log_file_name, ", head=", self._default_signature, "]")
+        
         total_file_reference -= 1
         if total_file_reference == 0:
             total_file.close()
-            print("closing total_log_file")
+            # print("closing total_log_file")
         
 
     
