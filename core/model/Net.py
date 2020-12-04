@@ -22,7 +22,7 @@ class Net(nn.Module):
         self.lstm = nn.LSTM(input_size=self.args.embed_dim, hidden_size=self.args.lstm_hidden,
                             num_layers=self.args.lstm_layers, batch_first=True,
                             bidirectional=self.args.lstm_directs == 2).to(self.args.device)
-        if (self.args.lstm_directs):
+        if self.args.lstm_directs:
             self.lstm_directs = 2
         else:
             self.lstm_directs = 1
@@ -50,9 +50,15 @@ class Net(nn.Module):
                                  nn.Linear(in_features=self.args.lstm_hidden, out_features=self.args.label_dim),
                                  nn.Sigmoid()).to(self.args.device)
 
+        self.newfc = nn.Sequential(
+            nn.Linear(in_features=self.lstm_directs * self.args.lstm_hidden, out_features=self.args.lstm_hidden),
+            nn.ReLU(),
+            nn.Linear(in_features=self.args.lstm_hidden, out_features=self.args.label_dim)
+        ).to(self.args.device)
+
         self.crf = CRF(num_tags=self.args.label_dim, batch_first=True).to(self.args.device)
 
-    def pad(self, a, l = 128):    # TODO
+    def pad(self, a, l=128):
         return a + [0] * (l - len(a))
 
     def get_output_score(self, texts: list):
@@ -76,9 +82,11 @@ class Net(nn.Module):
         lstm_out, (_, _) = self.lstm(embeddings, (h, c))
         # lstm_out -> [batch, seq_len, lstm_hidden * lstm_directs]
         lstm_out = lstm_out.contiguous().view(-1, self.lstm_directs * self.args.lstm_hidden)
-        fc1_out = self.fc1(lstm_out)
-        fc2_out = self.fc2(self.dropout(fc1_out))
+        # fc1_out = self.fc1(lstm_out)
+        # fc2_out = self.fc2(self.dropout(fc1_out))
         # fc2_out -> [batch * seq_len, label_dim]
+
+        fc2_out = self.newfc(lstm_out)
 
         lstm_emissions = fc2_out.contiguous().view(batch_size, self.args.seq_len, -1)
         # lstm_emissions -> [batch, seq_len, label_dim]
@@ -104,8 +112,17 @@ class Net(nn.Module):
         denominator = self.crf._compute_normalizer(lstm_feats, mask.bool())
         # shape: (batch_size,)
         llh = torch.log(numerator) - denominator
+        # llh = numerator - denominator
         return -llh.sum() / mask.float().sum()
         # return (denominator - numerator).mean()
+
+    def queryParameters(self, layer: str):
+        if layer == 'base':
+            return self.pretrain_base.parameters()
+        elif layer == 'lstm':
+            return self.lstm.parameters()
+        elif layer == 'dense':
+            return self.newfc.parameters()
 
 
 if __name__ == '__main__':

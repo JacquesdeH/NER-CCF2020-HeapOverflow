@@ -71,7 +71,8 @@ class CCFDataset(tud.Dataset):
                 if len(label_list) >= self.seq_len:
                     label_list = label_list[:self.seq_len]
                 else:
-                    label_list += [0 for count in range(self.seq_len - len(label_list))]
+                    label_list = [0] + label_list + [0 for count in range(self.seq_len - len(label_list) - 1)]
+                    # label_list += [0 for count in range(self.seq_len - len(label_list))]
                     # label_list += [[0] * self.args.label_dim for count in range(self.seq_len - len(label_list))]
                 label_content = torch.LongTensor(label_list)
                 return data_content, label_content.to(self.args.device)

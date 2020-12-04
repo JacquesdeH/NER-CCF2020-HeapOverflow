@@ -206,4 +206,4 @@ def quick_preproduce(max_size: int = None) -> LabelTrasformer:
 
 if __name__ == "__main__":
     from core.config.DefaultConfig import DefaultConfig as config
-    quick_preproduce(config.HYPER.SEQ_LEN)
+    quick_preproduce(config.HYPER.SEQ_LEN - 2)
