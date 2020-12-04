@@ -90,7 +90,7 @@ class Net(nn.Module):
         # scores, tag_seq = self.crf._viterbi_decode(feats=lstm_feats)
         # tag_seq = list(map(self.pad, tag_seq))
         for i in range(len(tag_seq)):
-            tag_seq[i] = self.pad(tag_seq[i])
+            tag_seq[i] = self.pad(tag_seq[i], self.args.seq_len)
 
         return torch.tensor(tag_seq, dtype=torch.long)
 
