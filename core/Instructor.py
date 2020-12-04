@@ -28,6 +28,7 @@ class Instructor:
         self.model_name = model_name
         self.args = args
         self.model = Net(self.model_name, self.args).to(self.args.device)
+        self.train_log = alloc_logger('train_log')
         pass
 
     def get_loss_fn(self, reduce=None, size_average=None):
@@ -68,7 +69,6 @@ class Instructor:
         optimizer = self.get_optimizer(self.model.parameters())
         # schedule = torch.optim.lr_scheduler.ExponentialLR(optimizer, 0.5)
         k_fold = KFold(dataloader=dataloader, k=k_fold)
-        loss_history = list()
         # for time in range(n_time):
         #     total_loss = 0.
         #     for fold in range(len(k_fold)):
@@ -102,7 +102,8 @@ class Instructor:
         tot_iters = k_fold.get_train_len()
         scheduler = self.get_scheduler(optimizer, 0.1, tot_iters)
         for data_content, label_content in tqdm(trainloader):
-            # label_predict = self.model(data_content)
+            label_predict = self.model(data_content)
+            print('predict:' + label_predict)
             batch_size = len(data_content)
             loss = loss_fn(data_content, label_content)
 
@@ -111,6 +112,7 @@ class Instructor:
             optimizer.step()
             scheduler.step()
             print('loss={:}', format(loss.detach().cpu().item() / batch_size))
+            self.train_log.log_message('loss={:}', format(loss.detach().cpu().item() / batch_size))
 
         validloader = k_fold.get_valid()
         cnt_sample = 0
@@ -124,6 +126,7 @@ class Instructor:
         print('==============================================')
         print('Valid loss={:}'.format(total_loss / cnt_sample))
         print('==============================================')
+        self.train_log.log_message('Valid loss={:}'.format(total_loss / cnt_sample))
 
     def genTestJson(self):
         with torch.no_grad():

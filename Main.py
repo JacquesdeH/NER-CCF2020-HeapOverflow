@@ -30,8 +30,8 @@ args.device = torch.device('cuda' if args.cuda and torch.cuda.is_available() els
 
 if __name__ == '__main__':
     instructor = Instructor.Instructor('Version1', args)
-    # instructor.train()
-    # instructor.save_module()
-    instructor.load_module()
-    instructor.genTestJson()
+    instructor.train()
+    instructor.save_module()
+    # instructor.load_module()
+    # instructor.genTestJson()
 
