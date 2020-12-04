@@ -38,7 +38,8 @@ class Instructor:
         return torch.optim.Adam(params=params, lr=lr)
 
     def get_scheduler(self, optimizer, rate, tot_iters):
-        return get_linear_schedule_with_warmup(optimizer, num_warmup_steps=rate*tot_iters, num_training_steps=tot_iters)
+        return get_linear_schedule_with_warmup(optimizer, num_warmup_steps=rate * tot_iters,
+                                               num_training_steps=tot_iters)
 
     def save_module(self):
         print('Saving model...')
@@ -109,7 +110,7 @@ class Instructor:
             loss.backward()
             optimizer.step()
             scheduler.step()
-            print('loss={:}', format(loss.detach().cpu().item()/batch_size))
+            print('loss={:}', format(loss.detach().cpu().item() / batch_size))
 
         validloader = k_fold.get_valid()
         cnt_sample = 0
@@ -123,3 +124,18 @@ class Instructor:
         print('==============================================')
         print('Valid loss={:}'.format(total_loss / cnt_sample))
         print('==============================================')
+
+    def genTestJson(self):
+        with torch.no_grad():
+            dataloader = CCFDataloader(args=self.args, in_train=False)
+            file_count = 0
+            for data_contents in dataloader:
+                predicts = self.model(data_contents)
+                predicts = predicts.cpu()  # [batch_size, seq_len, label_dim]
+                for predict_count in range(predicts.shape[0]):
+                    predict = predicts[predict_count]
+                    result = list(map(lambda x: int(x.item()), list(predict)))
+                    with open(os.path.join(config.PATHS.DATA_CCF_CLEANED,
+                                           'test/label/%d.json' % (file_count + predict_count)), 'w') as fw:
+                        json.dump(result, fw)
+                file_count += predicts.shape[0]

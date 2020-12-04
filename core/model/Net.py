@@ -52,6 +52,9 @@ class Net(nn.Module):
 
         self.crf = CRF(num_tags=self.args.label_dim, batch_first=True).to(self.args.device)
 
+    def pad(self, a, l = 128):    # TODO
+        return a + [0] * (l - len(a))
+
     def get_output_score(self, texts: list):
         batch_size = len(texts)
         input_ids = [self.tokenizer.encode(text, add_special_tokens=True, max_length=self.args.seq_len, truncation=True)
@@ -83,8 +86,12 @@ class Net(nn.Module):
 
     def forward(self, texts: list):
         lstm_feats, attention_masks = self.get_output_score(texts)
-        tag_seq = self.crf.decode(emissions=lstm_emissions.float(), mask=attention_masks.bool())
+        tag_seq = self.crf.decode(emissions=lstm_feats.float(), mask=attention_masks.bool())
         # scores, tag_seq = self.crf._viterbi_decode(feats=lstm_feats)
+        # tag_seq = list(map(self.pad, tag_seq))
+        for i in range(len(tag_seq)):
+            tag_seq[i] = self.pad(tag_seq[i])
+
         return torch.tensor(tag_seq, dtype=torch.long)
 
     def neg_log_likelihood_loss(self, texts, tags):
