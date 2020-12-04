@@ -29,7 +29,7 @@ args = parser.parse_args()
 args.device = torch.device('cuda' if args.cuda and torch.cuda.is_available() else 'cpu')
 
 if __name__ == '__main__':
-    instructor = Instructor.Instructor('Version1', args)
+    instructor = Instructor.Instructor('Version4', args)
     instructor.train()
     instructor.save_module()
     # instructor.load_module()

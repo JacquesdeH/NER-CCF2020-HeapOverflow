@@ -66,7 +66,7 @@ class Instructor:
         train_log.log_message("train at n_time: %d, k_fold: %d" % (n_time, k_fold))
         dataloader = CCFDataloader(args=self.args, in_train=True)
         loss_fn = self.get_loss_fn()
-        optimizer = self.get_optimizer(self.model.parameters())
+        optimizer = self.get_optimizer(self.model.parameters(), lr=self.args.lr)
         # schedule = torch.optim.lr_scheduler.ExponentialLR(optimizer, 0.5)
         k_fold = KFold(dataloader=dataloader, k=k_fold)
         # for time in range(n_time):
@@ -103,7 +103,7 @@ class Instructor:
         scheduler = self.get_scheduler(optimizer, 0.1, tot_iters)
         for data_content, label_content in tqdm(trainloader):
             label_predict = self.model(data_content)
-            print('predict:' + label_predict)
+            print('predict:' + str(label_predict))
             batch_size = len(data_content)
             loss = loss_fn(data_content, label_content)
 
@@ -111,8 +111,8 @@ class Instructor:
             loss.backward()
             optimizer.step()
             scheduler.step()
-            print('loss={:}', format(loss.detach().cpu().item() / batch_size))
-            self.train_log.log_message('loss={:}', format(loss.detach().cpu().item() / batch_size))
+            print('loss={:} lr={:}'.format(loss.detach().cpu().item() / batch_size, optimizer.param_groups[0]['lr']))
+            self.train_log.log_message('loss={:}'.format(loss.detach().cpu().item() / batch_size))
 
         validloader = k_fold.get_valid()
         cnt_sample = 0

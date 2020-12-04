@@ -103,8 +103,9 @@ class Net(nn.Module):
         # shape: (batch_size,)
         denominator = self.crf._compute_normalizer(lstm_feats, mask.bool())
         # shape: (batch_size,)
-        llh = numerator - denominator
+        llh = torch.log(numerator) - denominator
         return -llh.sum() / mask.float().sum()
+        # return (denominator - numerator).mean()
 
 
 if __name__ == '__main__':
