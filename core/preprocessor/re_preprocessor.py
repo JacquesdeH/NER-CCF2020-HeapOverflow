@@ -103,13 +103,11 @@ class RePreprocessor:
         for sample in samples:
             sample = sample.replace('\r', '')
             if random.random() < train_rate:
-                train_ofs.write(sample + "\n")
+                train_ofs.write(sample + "\n\n")
                 train_count += 1
-                train_ofs.write("\n")
             else:
-                test_ofs.write(sample + "\n")
+                test_ofs.write(sample + "\n\n")
                 test_count += 1
-                train_ofs.write("\n")
             
             total_count += 1
         train_ofs.close()
