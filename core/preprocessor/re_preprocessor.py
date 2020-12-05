@@ -35,7 +35,6 @@ class RePreprocessor:
         self.logger.log_message(signature, "start!")
 
         origin_data_count = len(os.listdir(self.origin_dir + "/train/data"))
-        alloc_file_num = origin_data_count
         self.logger.log_message(signature, "origin data count:\t", origin_data_count)
         file_name = os.path.join(DefaultConfig.PATHS.DATA_CCF_CLEANED, "train_origin_bio.txt")
         ofs = open(file_name, 'w', encoding='utf8')
@@ -66,9 +65,10 @@ class RePreprocessor:
             labels = self.label_formatter.infos_to_bio_str_list_label(infos, len(data))
 
             for idx, ch in enumerate(data):
-                ofs.write("{:s} {:s}\n".format(ch, labels[idx]))
+                ofs.write(ch + ' ' + labels[idx] + '\n')
             ofs.write("\n")
         
+        ofs.close()
         self.logger.log_message(signature, "finish!")
         self.logger.log_message(signature, "saving result in file:", file_name)
         self.logger.log_message(signature, "remove duplication {:d} times".format(dup_count))
@@ -80,6 +80,7 @@ class RePreprocessor:
             for unsolve_id in unsolve_mismatch:
                 self.logger.log_message(signature, "\t{:d}".format(unsolve_id))
 
+        self.mismatch_detector.save()
         self.logger.log_message(signature, "finish!")
 
     def divide_train(self, train_rate: float=0.8):
@@ -100,12 +101,16 @@ class RePreprocessor:
         test_count = 0
         total_count = 0
         for sample in samples:
+            sample = sample.replace('\r', '')
             if random.random() < train_rate:
-                train_ofs.write(sample + "\n\n")
+                train_ofs.write(sample + "\n")
                 train_count += 1
+                train_ofs.write("\n")
             else:
-                test_ofs.write(sample + "\n\n")
+                test_ofs.write(sample + "\n")
                 test_count += 1
+                train_ofs.write("\n")
+            
             total_count += 1
         train_ofs.close()
         test_ofs.close()
@@ -126,51 +131,25 @@ class RePreprocessor:
         self.logger.log_message(signature, "maxsize=", max_size)
 
         origin_data_count = len(os.listdir(self.origin_dir + "/test"))
-        alloc_file_num = origin_data_count
         self.logger.log_message(signature, "origin data count:\t", origin_data_count)
 
-        if max_size is not None:
-            divider = Divider(max_size)
-            divide_index = []  # [{"target": target_id, "origin": origin_id, "beg": beg_index}]
+        count = 0
         for i in range(origin_data_count):
             with open(self.origin_dir + "/test/{:d}.txt".format(i), 'r', encoding='utf8') as f:
                 data = f.read()
 
-            data = data.replace('\n', '')
+            new_data = self.mismatch_detector.remove_special_char(data)
+            if len(data) != len(new_data):
+                count += 1
 
-            # divide & save
-            if max_size is not None:
-                divide_result = divider.detect_division(data)
-                if len(divide_result) > 1:
-                    self.logger.log_message(signature, "[{:d}]\tlen={:d}".format(i, len(data)))
-                    # self.logger.log_message(signature, "[{:d}]\tdivide points:\t".format(i), divide_result)
-                for j in range(len(divide_result)):
-                    beg = divide_result[j]
-                    end = divide_result[j + 1] if j < len(divide_result) - 1 else -1
-                    target = i
-                    if j != 0:
-                        target = alloc_file_num
-                        alloc_file_num += 1
-                        divide_index.append({"target": target, "origin": i, "beg": beg})
-                    if len(divide_result) > 1:
-                        self.logger.log_message(signature, "[{:d}]\t".format(i),
-                                                "({:3d}:{:3d})->[{:d}]".format(beg, end, target))
-                    with open(self.target_dir + "/test/data/{:d}.txt".format(target), 'w', encoding='utf8') as f:
-                        f.write(data[beg: end])
+            with open(self.target_dir + "/test/data/{:d}.txt".format(i), 'w', encoding='utf8') as f:
+                f.write(data)
 
-            else:
-                with open(self.target_dir + "/test/data/{:d}.txt".format(i), 'w', encoding='utf8') as f:
-                    f.write(data)
-
-        if max_size is not None:
-            split_index_file_name = os.path.join(DefaultConfig.PATHS.DATA_INFO, "split_index_test.json")
-            self.logger.log_message(signature, "saving split index in file[", split_index_file_name, ']')
-            with open(split_index_file_name, 'w', encoding='utf8') as f:
-                json.dump(divide_index, f)
+        self.logger.log_message(signature, "changed {:d} data files!".format(count))
         self.logger.log_message(signature, "finish!")
 
 
-def quick_preproduce(max_size: int = None, train_rate: float=1) -> LabelTrasformer:
+def quick_preproduce(train_rate: float=1) -> LabelTrasformer:
     """
     封装好的快速进行预处理的函数.
     如果不指定 max_size 或指定为None, 将不会对原始样本进行分割, 
@@ -204,9 +183,9 @@ def quick_preproduce(max_size: int = None, train_rate: float=1) -> LabelTrasform
     except FileExistsError:
         logger.log_message("has existed")
     re_reprocessor = RePreprocessor()
-    re_reprocessor.produce_train(max_size)
+    re_reprocessor.produce_train()
     re_reprocessor.divide_train(train_rate)
-    # re_reprocessor.produce_test(max_size)
+    re_reprocessor.produce_test()
     re_reprocessor.trasformer.save_to_file()
     re_reprocessor.trasformer.log_bio_type_to_file()
     return re_reprocessor.trasformer
@@ -214,4 +193,4 @@ def quick_preproduce(max_size: int = None, train_rate: float=1) -> LabelTrasform
 
 if __name__ == "__main__":
     from core.config.DefaultConfig import DefaultConfig as config
-    quick_preproduce(config.HYPER.SEQ_LEN, 0.8)
+    quick_preproduce(0.8)
