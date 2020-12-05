@@ -8,9 +8,10 @@ from .label_transformer import LabelTrasformer
 from .divider import Divider
 import os
 import json
+import random
 
 
-class Preprocessor:
+class RePreprocessor:
     def __init__(self, origin_dir: str = None, target_dir: str = None):
         super().__init__()
         self.origin_dir = origin_dir if origin_dir is not None else DefaultConfig.PATHS.DATA_CCF_RAW
@@ -19,7 +20,7 @@ class Preprocessor:
         self.reader = LabelFileReader()
         self.label_formatter = LabelFormatter()
         self.mismatch_detector = MismatchDetector()
-        self.logger = alloc_logger("preprocessor.log", Preprocessor)
+        self.logger = alloc_logger("re_reprocessor.log", RePreprocessor)
         self.trasformer = self.label_formatter.fit(self.origin_dir + "/train/label")
 
     def produce_train(self, max_size: int = None):
@@ -36,7 +37,7 @@ class Preprocessor:
         origin_data_count = len(os.listdir(self.origin_dir + "/train/data"))
         alloc_file_num = origin_data_count
         self.logger.log_message(signature, "origin data count:\t", origin_data_count)
-        file_name = os.path.join(DefaultConfig.PATHS.DATA_CCF_CLEANED, "train.txt")
+        file_name = os.path.join(DefaultConfig.PATHS.DATA_CCF_CLEANED, "train_origin_bio.txt")
         ofs = open(file_name, 'w', encoding='utf8')
 
         reader = LabelFileReader()
@@ -81,6 +82,37 @@ class Preprocessor:
 
         self.logger.log_message(signature, "finish!")
 
+    def divide_train(self, train_rate: float=0.8):
+        signature = "divide_train()\t"
+        origin_file_name = os.path.join(DefaultConfig.PATHS.DATA_CCF_CLEANED, "train_origin_bio.txt")
+        train_file_name = os.path.join(DefaultConfig.PATHS.DATA_CCF_CLEANED, "train_train_bio.txt")
+        test_file_name = os.path.join(DefaultConfig.PATHS.DATA_CCF_CLEANED, "train_test_bio.txt")
+        self.logger.log_message(signature, "start!")
+        self.logger.log_message(signature, origin_file_name)
+        self.logger.log_message(signature, "\t|")
+        self.logger.log_message(signature, "\t+ -[train]- ->", train_file_name)
+        self.logger.log_message(signature, "\t+ -[test ]- ->", test_file_name)
+        with open(origin_file_name, 'r', encoding='utf8') as f:
+            samples = f.read().strip().split('\n\n')
+        train_ofs = open(train_file_name, 'w', encoding='utf8')
+        test_ofs = open(test_file_name, 'w', encoding='utf8')
+        train_count = 0
+        test_count = 0
+        total_count = 0
+        for sample in samples:
+            if random.random() < train_rate:
+                train_ofs.write(sample + "\n\n")
+                train_count += 1
+            else:
+                test_ofs.write(sample + "\n\n")
+                test_count += 1
+            total_count += 1
+        train_ofs.close()
+        test_ofs.close()
+        self.logger.log_message(signature, "finish!")
+        self.logger.log_message(signature, "train count=", train_count)
+        self.logger.log_message(signature, "test count=", test_count)
+        self.logger.log_message(signature, "total count=", total_count)
 
     def produce_test(self, max_size: int = None):
         """
@@ -138,7 +170,7 @@ class Preprocessor:
         self.logger.log_message(signature, "finish!")
 
 
-def quick_preproduce(max_size: int = None) -> LabelTrasformer:
+def quick_preproduce(max_size: int = None, train_rate: float=1) -> LabelTrasformer:
     """
     封装好的快速进行预处理的函数.
     如果不指定 max_size 或指定为None, 将不会对原始样本进行分割, 
@@ -171,13 +203,15 @@ def quick_preproduce(max_size: int = None) -> LabelTrasformer:
         os.makedirs(new_dir)
     except FileExistsError:
         logger.log_message("has existed")
-    preprocessor = Preprocessor()
-    preprocessor.produce_train(max_size)
-    # preprocessor.produce_test(max_size)
-    preprocessor.trasformer.save_to_file()
-    return preprocessor.trasformer
+    re_reprocessor = RePreprocessor()
+    re_reprocessor.produce_train(max_size)
+    re_reprocessor.divide_train(train_rate)
+    # re_reprocessor.produce_test(max_size)
+    re_reprocessor.trasformer.save_to_file()
+    re_reprocessor.trasformer.log_bio_type_to_file()
+    return re_reprocessor.trasformer
 
 
 if __name__ == "__main__":
     from core.config.DefaultConfig import DefaultConfig as config
-    quick_preproduce(config.HYPER.SEQ_LEN)
+    quick_preproduce(config.HYPER.SEQ_LEN, 0.8)
