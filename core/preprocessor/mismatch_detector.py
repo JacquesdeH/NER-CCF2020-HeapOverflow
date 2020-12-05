@@ -38,8 +38,8 @@ class MismatchDetector:
     # def __del__(self):
     #    self.save()
 
-    def fix_mismatch(self, data:str, infos:"Iterable[LabelInfo]") -> (str, "List[LabelInfo]"):
-        new_data = data.replace('\n', '')
+    def fix_mismatch(self, data:str, infos:"Iterable[LabelInfo]", replace_new_line=True) -> (str, "List[LabelInfo]"):
+        new_data = data.replace('\n', '') if replace_new_line else data
         reader = self.reader
         for no, info in enumerate(infos):
             if new_data[info.Pos_b : info.Pos_e + 1] != info.Privacy:

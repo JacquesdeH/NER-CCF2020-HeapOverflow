@@ -134,6 +134,21 @@ class LabelFormatter:
                 reading = False
         return ret
 
+    def infos_to_bio_str_list_label(self, infos: "Iterable[LabelInfo]", length: int) -> "List[str]":
+        lst = ["O"] * length
+        for info in infos:
+            type_name = info.Category
+            start_index = info.Pos_b
+            end_index = info.Pos_e
+
+            # 多字
+            m_sym = "I-" + type_name            # 名词短语中间的标记
+            for i in range(start_index, end_index + 1):
+                if i == start_index:
+                    lst[i] = "B-" + type_name   # 标记名词短语的开头
+                    continue
+                lst[i] = m_sym                  # 标记名词短语的中间和结尾部分
+        return lst
 
     def infos_to_str_list_label(self, infos: "Iterable[LabelInfo]", length: int) -> "List[str]":
         lst = ["O"] * length
