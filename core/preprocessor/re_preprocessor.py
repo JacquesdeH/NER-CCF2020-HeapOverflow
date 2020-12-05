@@ -36,7 +36,8 @@ class Preprocessor:
         origin_data_count = len(os.listdir(self.origin_dir + "/train/data"))
         alloc_file_num = origin_data_count
         self.logger.log_message(signature, "origin data count:\t", origin_data_count)
-        ofs = open(os.path.join(DefaultConfig.PATHS.DATA_CCF_CLEANED, "train.txt"), 'w', encoding='utf8')
+        file_name = os.path.join(DefaultConfig.PATHS.DATA_CCF_CLEANED, "train.txt")
+        ofs = open(file_name, 'w', encoding='utf8')
 
         reader = LabelFileReader()
         dup_count = 0
@@ -67,10 +68,12 @@ class Preprocessor:
                 ofs.write("{:s} {:s}\n".format(ch, labels[idx]))
             ofs.write("\n")
         
+        self.logger.log_message(signature, "finish!")
+        self.logger.log_message(signature, "saving result in file:", file_name)
         self.logger.log_message(signature, "remove duplication {:d} times".format(dup_count))
         self.logger.log_message(signature, "detect {:d} unsolved mismatch".format(len(unsolve_mismatch)))
         self.logger.log_message(signature, "origin file count={:d}".format(origin_data_count))
-        self.logger.log_message(signature, "output file count={:d}".format(alloc_file_num))
+        # self.logger.log_message(signature, "output file count={:d}".format(alloc_file_num))
         if len(unsolve_mismatch) != 0:
             self.logger.log_message(signature, "their ID are:")
             for unsolve_id in unsolve_mismatch:
