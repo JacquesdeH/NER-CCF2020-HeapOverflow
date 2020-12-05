@@ -42,6 +42,7 @@ class RePreprocessor:
         reader = LabelFileReader()
         dup_count = 0
         unsolve_mismatch = []
+        remove_vx_and_email_count = 0
 
         for i in range(origin_data_count):
             with open(self.origin_dir + "/train/label/{:d}.csv".format(i), 'r', encoding='utf8') as f:
@@ -50,6 +51,9 @@ class RePreprocessor:
                 data = f.read()
 
             data, infos = self.mismatch_detector.fix_mismatch(data, infos)
+            new_infos = [info for info in infos if info.Category not in ("vx", "email")]
+            remove_vx_and_email_count += len(infos) - len(new_infos)
+            infos = new_infos
 
             if data is None or infos is None:
                 unsolve_mismatch.append(i)
@@ -69,8 +73,8 @@ class RePreprocessor:
             ofs.write("\n")
         
         ofs.close()
-        self.logger.log_message(signature, "finish!")
         self.logger.log_message(signature, "saving result in file:", file_name)
+        self.logger.log_message(signature, "remove vx & email ", remove_vx_and_email_count)
         self.logger.log_message(signature, "remove duplication {:d} times".format(dup_count))
         self.logger.log_message(signature, "detect {:d} unsolved mismatch".format(len(unsolve_mismatch)))
         self.logger.log_message(signature, "origin file count={:d}".format(origin_data_count))
@@ -112,10 +116,10 @@ class RePreprocessor:
             total_count += 1
         train_ofs.close()
         test_ofs.close()
-        self.logger.log_message(signature, "finish!")
         self.logger.log_message(signature, "train count=", train_count)
         self.logger.log_message(signature, "test count=", test_count)
         self.logger.log_message(signature, "total count=", total_count)
+        self.logger.log_message(signature, "finish!")
 
     def produce_test(self, max_size: int = None):
         """
@@ -129,7 +133,12 @@ class RePreprocessor:
         self.logger.log_message(signature, "maxsize=", max_size)
 
         origin_data_count = len(os.listdir(self.origin_dir + "/test"))
+        alloc_file_num = origin_data_count
         self.logger.log_message(signature, "origin data count:\t", origin_data_count)
+
+        if max_size is not None:
+            divider = Divider(max_size)
+            divide_index = []  # [{"target": target_id, "origin": origin_id, "beg": beg_index}]
 
         count = 0
         for i in range(origin_data_count):
@@ -140,14 +149,42 @@ class RePreprocessor:
             if len(data) != len(new_data):
                 count += 1
 
-            with open(self.target_dir + "/test/data/{:d}.txt".format(i), 'w', encoding='utf8') as f:
-                f.write(data)
+            data = new_data
 
+            # divide & save
+            if max_size is not None:
+                divide_result = divider.detect_division(data)
+                if len(divide_result) > 1:
+                    self.logger.log_message(signature, "[{:d}]\tlen={:d}".format(i, len(data)))
+                    # self.logger.log_message(signature, "[{:d}]\tdivide points:\t".format(i), divide_result)
+                for j in range(len(divide_result)):
+                    beg = divide_result[j]
+                    end = divide_result[j + 1] if j < len(divide_result) - 1 else -1
+                    target = i
+                    if j != 0:
+                        target = alloc_file_num
+                        alloc_file_num += 1
+                        divide_index.append({"target": target, "origin": i, "beg": beg})
+                    if len(divide_result) > 1:
+                        self.logger.log_message(signature, "[{:d}]\t".format(i),
+                                                "({:3d}:{:3d})->[{:d}]".format(beg, end, target))
+                    with open(self.target_dir + "/test/data/{:d}.txt".format(target), 'w', encoding='utf8') as f:
+                        f.write(data[beg: end])
+
+            else:
+                with open(self.target_dir + "/test/data/{:d}.txt".format(i), 'w', encoding='utf8') as f:
+                    f.write(data)
+
+        if max_size is not None:
+            split_index_file_name = os.path.join(DefaultConfig.PATHS.DATA_INFO, "split_index_test.json")
+            self.logger.log_message(signature, "saving split index in file[", split_index_file_name, ']')
+            with open(split_index_file_name, 'w', encoding='utf8') as f:
+                json.dump(divide_index, f)
         self.logger.log_message(signature, "changed {:d} data files!".format(count))
         self.logger.log_message(signature, "finish!")
 
 
-def quick_preproduce(train_rate: float=1) -> LabelTrasformer:
+def quick_preproduce(max_size: int, train_rate: float=1, origin_dir: str = None, target_dir: str = None) -> LabelTrasformer:
     """
     封装好的快速进行预处理的函数.
     如果不指定 max_size 或指定为None, 将不会对原始样本进行分割, 
@@ -156,34 +193,35 @@ def quick_preproduce(train_rate: float=1) -> LabelTrasformer:
     @parm max_size: 单个输入样例的最大长度.
     """
     logger = alloc_logger()
-    try:
-        new_dir = DefaultConfig.PATHS.DATA_CCF_CLEANED + "/test/data"
-        logger.log_message("mkdir " + new_dir)
-        os.makedirs(new_dir)
-    except FileExistsError:
-        logger.log_message("has existed")
-    try:
-        new_dir = DefaultConfig.PATHS.DATA_CCF_CLEANED + "/test/label"
-        logger.log_message("mkdir " + new_dir)
-        os.makedirs(new_dir)
-    except FileExistsError:
-        logger.log_message("has existed")
-    try:
-        new_dir = DefaultConfig.PATHS.DATA_CCF_CLEANED + "/train/data"
-        logger.log_message("mkdir " + new_dir)
-        os.makedirs(new_dir)
-    except FileExistsError:
-        logger.log_message("has existed")
-    try:
-        new_dir = DefaultConfig.PATHS.DATA_CCF_CLEANED + "/train/label"
-        logger.log_message("mkdir " + new_dir)
-        os.makedirs(new_dir)
-    except FileExistsError:
-        logger.log_message("has existed")
-    re_reprocessor = RePreprocessor()
+    if target_dir is None:
+        try:
+            new_dir = DefaultConfig.PATHS.DATA_CCF_CLEANED + "/test/data"
+            logger.log_message("mkdir " + new_dir)
+            os.makedirs(new_dir)
+        except FileExistsError:
+            logger.log_message("has existed")
+        try:
+            new_dir = DefaultConfig.PATHS.DATA_CCF_CLEANED + "/test/label"
+            logger.log_message("mkdir " + new_dir)
+            os.makedirs(new_dir)
+        except FileExistsError:
+            logger.log_message("has existed")
+        try:
+            new_dir = DefaultConfig.PATHS.DATA_CCF_CLEANED + "/train/data"
+            logger.log_message("mkdir " + new_dir)
+            os.makedirs(new_dir)
+        except FileExistsError:
+            logger.log_message("has existed")
+        try:
+            new_dir = DefaultConfig.PATHS.DATA_CCF_CLEANED + "/train/label"
+            logger.log_message("mkdir " + new_dir)
+            os.makedirs(new_dir)
+        except FileExistsError:
+            logger.log_message("has existed")
+    re_reprocessor = RePreprocessor(origin_dir=origin_dir, target_dir=target_dir)
     re_reprocessor.produce_train()
     re_reprocessor.divide_train(train_rate)
-    re_reprocessor.produce_test()
+    re_reprocessor.produce_test(max_size)
     re_reprocessor.trasformer.save_to_file()
     re_reprocessor.trasformer.log_bio_type_to_file()
     return re_reprocessor.trasformer
@@ -191,4 +229,4 @@ def quick_preproduce(train_rate: float=1) -> LabelTrasformer:
 
 if __name__ == "__main__":
     from core.config.DefaultConfig import DefaultConfig as config
-    quick_preproduce(0.8)
+    quick_preproduce(256 - 2, 0.8)

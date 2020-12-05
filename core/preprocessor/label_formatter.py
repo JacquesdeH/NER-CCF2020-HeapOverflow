@@ -7,6 +7,7 @@ from ..utils import alloc_logger
 from .label_transformer import BMESOLabel
 from .label_transformer import LabelType
 from .label_transformer import LabelTrasformer
+from collections import Counter
 
 
 class LabelFormatter:
@@ -84,6 +85,38 @@ class LabelFormatter:
                     continue
                 lst[i] = m_sym                  # 标记名词短语的中间部分
         return lst
+
+    def bio_str_list_label_and_token_list_to_infos(self, ID: int, bio_str_list:"Iterable[str]", tokens:"Iterable[str]", receive_rate:float) -> "List[LabelIndo]":
+        ret = []
+        reading = False
+        counting = None
+        beg = 0
+        content = ""
+        for i in range(len(bio_str_list)):
+            label = bio_str_list[i]
+            token = tokens[i].replace("##", '')
+            if reading:
+                if label[0] in ('B', 'O'):
+                    counter = Counter(counting)
+                    most, times = counter.most_common(1)[0]
+                    if (times / len(counting) >= receive_rate):
+                        ret.append(LabelInfo(
+                            ID = ID,
+                            Category = most,
+                            Pos_b = beg,
+                            Pos_e = len(content) - 1,
+                            Privacy = content[beg:]
+                            ))
+                if label[0] == 'I':
+                    counting.append(label[2:])
+                if label[0] == 'O':
+                    reading = False
+            if label[0] == 'B':
+                counting = [label[2:]]
+                beg = len(content)
+                reading = True
+            content += token
+        return ret
 
     def integer_list_label_and_data_to_infos(self, ID: int, integer_list:"Iterable[int]", data:str) -> "List[LabelIndo]":
         label_list = [None] * len(integer_list)
