@@ -42,7 +42,11 @@ class RePreprocessor:
         reader = LabelFileReader()
         dup_count = 0
         unsolve_mismatch = []
-        remove_vx_and_email_count = 0
+        origin_total_entity_count = 0
+        cleaned_entity_count = 0
+
+        remove_vx_count = 0
+        remove_email_count = 0
 
         for i in range(origin_data_count):
             with open(self.origin_dir + "/train/label/{:d}.csv".format(i), 'r', encoding='utf8') as f:
@@ -51,8 +55,14 @@ class RePreprocessor:
                 data = f.read()
 
             data, infos = self.mismatch_detector.fix_mismatch(data, infos)
-            new_infos = [info for info in infos if info.Category not in ("vx", "email")]
-            remove_vx_and_email_count += len(infos) - len(new_infos)
+            origin_total_entity_count += len(infos)
+
+            new_infos = [info for info in infos if info.Category != 'vx']
+            remove_vx_count += len(infos) - len(new_infos)
+            infos = new_infos
+            
+            new_infos = [info for info in infos if info.Category != 'email']
+            remove_email_count += len(infos) - len(new_infos)
             infos = new_infos
 
             if data is None or infos is None:
@@ -66,6 +76,8 @@ class RePreprocessor:
                 dup_count += 1
                 self.logger.log_message(signature, "[{:d}]\tremoving dup\t".format(i), reader.dumps(info))
 
+            cleaned_entity_count += len(infos)
+
             labels = self.label_formatter.infos_to_bio_str_list_label(infos, len(data))
 
             for idx, ch in enumerate(data):
@@ -73,11 +85,14 @@ class RePreprocessor:
             ofs.write("\n")
         
         ofs.close()
-        self.logger.log_message(signature, "saving result in file:", file_name)
-        self.logger.log_message(signature, "remove vx & email ", remove_vx_and_email_count)
-        self.logger.log_message(signature, "remove duplication {:d} times".format(dup_count))
-        self.logger.log_message(signature, "detect {:d} unsolved mismatch".format(len(unsolve_mismatch)))
         self.logger.log_message(signature, "origin file count={:d}".format(origin_data_count))
+        self.logger.log_message(signature, "save result in file:", file_name)
+        self.logger.log_message(signature, "origin entity count=", origin_total_entity_count)
+        self.logger.log_message(signature, "remove vx ", remove_vx_count, " times")
+        self.logger.log_message(signature, "remove email ", remove_email_count, " times")
+        self.logger.log_message(signature, "remove duplication {:d} times".format(dup_count))
+        self.logger.log_message(signature, "cleaned entity count=", cleaned_entity_count)
+        self.logger.log_message(signature, "detect {:d} unsolved mismatch".format(len(unsolve_mismatch)))
         # self.logger.log_message(signature, "output file count={:d}".format(alloc_file_num))
         if len(unsolve_mismatch) != 0:
             self.logger.log_message(signature, "their ID are:")

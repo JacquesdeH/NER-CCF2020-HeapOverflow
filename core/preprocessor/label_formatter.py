@@ -116,6 +116,17 @@ class LabelFormatter:
                 beg = len(content)
                 reading = True
             content += token
+        if reading:
+            counter = Counter(counting)
+            most, times = counter.most_common(1)[0]
+            if (times / len(counting) >= receive_rate):
+                ret.append(LabelInfo(
+                    ID = ID,
+                    Category = most,
+                    Pos_b = beg,
+                    Pos_e = len(content) - 1,
+                    Privacy = content[beg:]
+                    ))
         return ret
 
     def integer_list_label_and_data_to_infos(self, ID: int, integer_list:"Iterable[int]", data:str) -> "List[LabelIndo]":

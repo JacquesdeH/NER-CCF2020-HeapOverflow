@@ -31,7 +31,7 @@ class ReResultFormatter:
 
     def combine_all(self, receive_rate: float=0.8, result_dir: str=None):
         def file_num_to_tokens_and_labels(num: int)->(list, list):
-            with open(os.path.join(result_dir, "{:d}.json".format(i)), 'r', encoding='utf8') as f:
+            with open(os.path.join(result_dir, "{:d}.json".format(num)), 'r', encoding='utf8') as f:
                 result = json.load(f)
                 return result["data"][1:-1], result["tags"][1:-1]
 
@@ -43,8 +43,6 @@ class ReResultFormatter:
         self.logger.log_message(signature, "origin result dir:\t", result_dir)
 
         origin_result_count = len(os.listdir(os.path.join(DefaultConfig.PATHS.DATA_CCF_RAW, "test")))
-        # TODO
-        origin_result_count = 500
         self.logger.log_message(signature, "origin result count:\t", origin_result_count)
 
 
@@ -78,6 +76,71 @@ class ReResultFormatter:
 
         self.logger.log_message("mismatches:\t", label_token_len_mismatch)
 
+    def _print_infos_to_csv_for_id(self, ID: int, infos: list, csv_ofs, data_dir: str) -> int:
+        with open(os.path.join(data_dir, "{:d}.txt".format(ID)), 'r', encoding='utf8') as f:
+            raw_content = f.read()
+        reader = LabelFileReader()
+        signature = "_print_infos_to_csv_for_id()\t"
+        not_in_raw_count = 0
+        head = 0
+        to_print_infos = []
+        for info in infos:
+            content = info.Privacy
+
+            current_content = raw_content[head:].lower()
+            if content in current_content:
+                new_beg = head + current_content.find(content)
+                new_end = new_beg + len(content) - 1
+                head = new_end + 1
+                to_print_infos.append(LabelInfo(
+                    ID = ID,
+                    Category = info.Category,
+                    Pos_b = new_beg,
+                    Pos_e = new_end,
+                    Privacy = content
+                ))
+                continue
+            pattern = content               \
+                .replace('\\', '\\\\')      \
+                .replace('(', '\\(')        \
+                .replace(')', '\\)')        \
+                .replace('?', '\\?')        \
+                .replace('.', '\\.')        \
+                .replace('*', '\\*')        \
+                .replace('+', '\\+')        \
+                .replace("[UNK]", ".+?")    \
+                .replace('[', '\\[')        \
+                .replace(']', '\\]')        \
+                .replace('{', '\\{')        \
+                .replace('}', '\\}')        
+            m = re.search(pattern, current_content)
+            if m is not None:
+                new_beg = head + m.start()
+                new_content = m.group()
+                new_end = new_beg + len(new_content) - 1
+                head = new_end + 1
+                to_print_infos.append(LabelInfo(
+                    ID = ID,
+                    Category = info.Category,
+                    Pos_b = new_beg,
+                    Pos_e = new_end,
+                    Privacy = new_content
+                ))
+                continue
+            not_in_raw_count += 1
+            if not_in_raw_count == 1:
+                self.logger.log_message(signature, "[{:d}] found mismatch(es):".format(ID))
+            # self.logger.log_message(signature, "pattern=", pattern)
+            self.logger.log_message(signature, '\t', reader.dumps(info))
+        
+        for info in infos:
+            csv_ofs.write(reader.dumps(info) + '\n')
+
+        if not_in_raw_count != 0:
+            self.logger.log_message(signature, "[{:d}] detect {:d} info not in raw".format(ID, not_in_raw_count))
+
+        return not_in_raw_count
+
     def trans_origin_to_raw(self, data_dir: str=None):
         signature = "trans_origin_to_raw()\t"
 
@@ -89,43 +152,29 @@ class ReResultFormatter:
         data_dir = data_dir if data_dir is not None else os.path.join(DefaultConfig.PATHS.DATA_CCF_RAW, "test")
 
         not_in_raw_count = 0
+        current_id = 0
+        infos = []
         for line in input_csv.readlines():
             info = reader.loads(line)
-            content = info.Privacy
-            beg = info.Pos_b
-            end = info.Pos_e
-            ID = info.ID
-            with open(os.path.join(data_dir, "{:d}.txt".format(ID)), 'r', encoding='utf8') as f:
-                raw_content = f.read()
-            new_beg = raw_content.lower().find(content, max(beg - 13, 0), min(end + 13, len(raw_content)))
-            new_info = None
-            if new_beg < 0:
-                m = re.search(content.replace("[UNK]", '.*?'), raw_content.lower()[max(beg - 5, 0): min(end + 5, len(raw_content))])
-                if m is not None:
-                    new_info = LabelInfo(
-                        ID = ID,
-                        Category = info.Category,
-                        Pos_b = m.start(),
-                        Pos_e = m.end() - 1,
-                        Privacy = content
-                    )
-            else:
-                new_end = new_beg + end - beg
-                new_info = LabelInfo(
-                    ID = ID,
-                    Category = info.Category,
-                    Pos_b = new_beg,
-                    Pos_e = new_end,
-                    Privacy = content
-                )
-            if new_info is None:
-                self.logger.log_message(signature, "[{:d}]content not found in raw:\t".format(ID), reader.dumps(info))
-                self.logger.log_message(signature, "in:\t", content in raw_content)
-                self.logger.log_message(signature, "raw_content:\t", raw_content)
-                not_in_raw_count += 1
+            if (info.ID == current_id):
+                infos.append(info)
                 continue
-            new_line = reader.dumps(new_info)
-            output_csv.write(new_line + self.end)
+            not_in_raw_count +=  \
+                self._print_infos_to_csv_for_id(
+                    ID=current_id, 
+                    infos=infos, 
+                    csv_ofs=output_csv, 
+                    data_dir=data_dir)
+
+            current_id = info.ID
+            infos = [info]
+
+        not_in_raw_count +=  \
+            self._print_infos_to_csv_for_id(
+                ID=current_id, 
+                infos=infos, 
+                csv_ofs=output_csv, 
+                data_dir=data_dir)
 
 
         self.logger.log_message(signature, "not in raw count=", not_in_raw_count)
