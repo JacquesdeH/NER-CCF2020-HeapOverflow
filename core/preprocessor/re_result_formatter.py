@@ -14,10 +14,12 @@ class ReResultFormatter:
         
         self.logger = alloc_logger("re_result_formatter.log", ReResultFormatter)
         self.end = end
+        email_pattern = r"[a-zA-Z0-9_\.]+@[a-zA-Z0-9_\.]+"
+        self.email_re = re.compile(email_pattern)
         self.combine_index = {} # origin: (beg, target)
         split_index_file = split_index_file if split_index_file is not None else os.path.join(DefaultConfig.PATHS.DATA_INFO, "split_index_test.json")
-        
         self.logger.log_message("loading split_index from file:\t", split_index_file)
+
         with open(split_index_file, 'r', encoding='utf8') as f:
             m = json.load(f)
             for item in m:
@@ -76,7 +78,23 @@ class ReResultFormatter:
 
         self.logger.log_message("mismatches:\t", label_token_len_mismatch)
 
-    def _print_infos_to_csv_for_id(self, ID: int, infos: list, csv_ofs, data_dir: str) -> int:
+    def detect_email(self, ID:int, data: str)->"List[LabelInfo]":
+        signature = "detect_email()"
+        ret = []
+        for m in self.email_re.finditer(data):
+            ret.append(LabelInfo(
+                ID = ID,
+                Category = "email",
+                Pos_b = m.start(),
+                Pos_e = m.end() - 1,
+                Privacy = m.group()
+            ))
+        if len(ret) != 0:
+            self.logger.log_message(signature, "[{:d}] found {:d} emails by re".format(ID, len(ret)))
+            self.logger.log_message(ret)
+        return ret
+
+    def _print_infos_to_csv_for_id(self, ID: int, infos: list, csv_ofs, data_dir: str, detect_email = True) -> (int, int):
         with open(os.path.join(data_dir, "{:d}.txt".format(ID)), 'r', encoding='utf8') as f:
             raw_content = f.read()
         reader = LabelFileReader()
@@ -135,23 +153,29 @@ class ReResultFormatter:
         
         for info in infos:
             csv_ofs.write(reader.dumps(info) + '\n')
+        email_count = 0
+        if detect_email:
+            for info in self.detect_email(ID, raw_content):
+                email_count += 1
+                csv_ofs.write(reader.dumps(info) + '\n')
 
         if not_in_raw_count != 0:
             self.logger.log_message(signature, "[{:d}] detect {:d} info not in raw".format(ID, not_in_raw_count))
 
-        return not_in_raw_count
+        return not_in_raw_count, email_count
 
-    def trans_origin_to_raw(self, data_dir: str=None):
+    def trans_origin_to_raw(self, data_dir: str=None, detect_email = True):
         signature = "trans_origin_to_raw()\t"
 
         input_csv = open(os.path.join(DefaultConfig.PATHS.DATA_INFO, "predict_origin.csv"), 'r', encoding='utf8')
-        output_csv = open(os.path.join(DefaultConfig.PATHS.DATA_INFO, "predict.csv"), 'w', encoding='utf8')
+        output_csv = open(os.path.join(DefaultConfig.PATHS.DATA_INFO, "predict_raw.csv"), 'w', encoding='utf8')
 
         reader = LabelFileReader()
 
         data_dir = data_dir if data_dir is not None else os.path.join(DefaultConfig.PATHS.DATA_CCF_RAW, "test")
 
         not_in_raw_count = 0
+        email_count = 0
         current_id = 0
         infos = []
         for line in input_csv.readlines():
@@ -159,28 +183,61 @@ class ReResultFormatter:
             if (info.ID == current_id):
                 infos.append(info)
                 continue
-            not_in_raw_count +=  \
+            not_in_raw_count_delta, email_count_delta =  \
                 self._print_infos_to_csv_for_id(
                     ID=current_id, 
                     infos=infos, 
                     csv_ofs=output_csv, 
-                    data_dir=data_dir)
+                    data_dir=data_dir,
+                    detect_email=detect_email)
+            not_in_raw_count += not_in_raw_count_delta
+            email_count += email_count_delta
 
             current_id = info.ID
             infos = [info]
 
-        not_in_raw_count +=  \
+        not_in_raw_count_delta, email_count_delta =  \
             self._print_infos_to_csv_for_id(
                 ID=current_id, 
                 infos=infos, 
                 csv_ofs=output_csv, 
-                data_dir=data_dir)
+                data_dir=data_dir,
+                detect_email=detect_email)
+        not_in_raw_count += not_in_raw_count_delta
+        email_count += email_count_delta
 
 
         self.logger.log_message(signature, "not in raw count=", not_in_raw_count)
+        self.logger.log_message(signature, "reg email count=", email_count)
         self.logger.log_message(signature, "finish")
         input_csv.close()
         output_csv.close()
+
+    def final_format(self):
+        signature = "final_format()\t"
+        self.logger.log_message(signature, "start")
+        with open(os.path.join(DefaultConfig.PATHS.DATA_INFO, "predict_raw.csv"), 'r', encoding='utf8') as f:
+            lines = f.read().splitlines()
+            self.logger.log_message(signature, "total entity count=", len(lines))
+            all_content = list(set(lines))
+            self.logger.log_message(signature, "unique entity count=", len(lines))
+        def get_beg(line: str)->int:
+            ID, clz, beg, end, content = tuple(line.split(','))
+            return int(beg)
+        def get_end(line: str)->int:
+            ID, clz, beg, end, content = tuple(line.split(','))
+            return int(end)
+        def get_id(line: str)->int:
+            ID, clz, beg, end, content = tuple(line.split(','))
+            return int(ID)
+        all_content.sort(key=get_end)
+        all_content.sort(key=get_beg)
+        all_content.sort(key=get_id)
+        with open(os.path.join(DefaultConfig.PATHS.DATA_INFO, "predict.csv"), 'w', encoding='utf8') as f:
+            f.write('ID,Category,Pos_b,Pos_e,Privacy\n')
+            for content in all_content:
+                f.write(content + "\n")
+
 
 if __name__ == "__main__":
     # formatter = ReResultFormatter(os.path.join(DefaultConfig.PATHS.DATA_INFO, "split_index_train.json"))
@@ -192,3 +249,4 @@ if __name__ == "__main__":
     formatter = ReResultFormatter()
     formatter.combine_all()
     formatter.trans_origin_to_raw()
+    formatter.final_format()
