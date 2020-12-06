@@ -47,6 +47,8 @@ class RePreprocessor:
 
         remove_vx_count = 0
         remove_email_count = 0
+        remove_mobile_count = 0
+        remove_QQ_count = 0
 
         for i in range(origin_data_count):
             with open(self.origin_dir + "/train/label/{:d}.csv".format(i), 'r', encoding='utf8') as f:
@@ -63,6 +65,14 @@ class RePreprocessor:
             
             new_infos = [info for info in infos if info.Category != 'email']
             remove_email_count += len(infos) - len(new_infos)
+            infos = new_infos
+            
+            new_infos = [info for info in infos if info.Category != 'mobile']
+            remove_mobile_count += len(infos) - len(new_infos)
+            infos = new_infos
+            
+            new_infos = [info for info in infos if info.Category != 'QQ']
+            remove_QQ_count += len(infos) - len(new_infos)
             infos = new_infos
 
             if data is None or infos is None:
@@ -90,6 +100,8 @@ class RePreprocessor:
         self.logger.log_message(signature, "origin entity count=", origin_total_entity_count)
         self.logger.log_message(signature, "remove vx ", remove_vx_count, " times")
         self.logger.log_message(signature, "remove email ", remove_email_count, " times")
+        self.logger.log_message(signature, "remove mobile ", remove_mobile_count, " times")
+        self.logger.log_message(signature, "remove QQ ", remove_QQ_count, " times")
         self.logger.log_message(signature, "remove duplication {:d} times".format(dup_count))
         self.logger.log_message(signature, "cleaned entity count=", cleaned_entity_count)
         self.logger.log_message(signature, "detect {:d} unsolved mismatch".format(len(unsolve_mismatch)))
