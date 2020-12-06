@@ -1,0 +1,11 @@
+ID,Category,Pos_b,Pos_e,Privacy
+8179,address,15,16,上海
+8179,address,18,19,北京
+8179,address,21,22,深圳
+8179,address,24,25,成都
+8179,book,0,1,每经
+8179,name,4,5,陈珂
+8179,name,6,7,胡琼
+8179,name,8,10,黄惠敏
+8179,name,11,12,杨斌
+8179,position,2,3,记者
