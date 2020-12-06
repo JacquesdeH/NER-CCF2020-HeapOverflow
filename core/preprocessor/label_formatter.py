@@ -86,7 +86,11 @@ class LabelFormatter:
                 lst[i] = m_sym                  # 标记名词短语的中间部分
         return lst
 
-    def bio_str_list_label_and_token_list_to_infos(self, ID: int, bio_str_list:"Iterable[str]", tokens:"Iterable[str]", receive_rate:float) -> "List[LabelIndo]":
+    def bio_str_list_label_and_token_list_to_infos(self, 
+        ID: int, 
+        bio_str_list:"Iterable[str]", 
+        tokens:"Iterable[str]", 
+        receive_rate:float) -> "List[LabelIndo]":
         ret = []
         reading = False
         counting = None

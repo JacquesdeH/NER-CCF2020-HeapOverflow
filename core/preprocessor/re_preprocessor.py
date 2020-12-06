@@ -114,6 +114,42 @@ class RePreprocessor:
         self.mismatch_detector.save()
         self.logger.log_message(signature, "finish!")
 
+    def divide_train_by_index(self, test_start_index: int):
+        signature = "divide_train_by_index()\t"
+        origin_file_name = os.path.join(DefaultConfig.PATHS.DATA_CCF_CLEANED, "train_origin_bio.txt")
+        train_file_name = os.path.join(DefaultConfig.PATHS.DATA_CCF_CLEANED, "train_train_bio.txt")
+        test_file_name = os.path.join(DefaultConfig.PATHS.DATA_CCF_CLEANED, "train_test_bio.txt")
+        self.logger.log_message(signature, "start!")
+        self.logger.log_message(signature, origin_file_name)
+        self.logger.log_message(signature, "\t|")
+        self.logger.log_message(signature, "\t+ -[train]- ->", train_file_name)
+        self.logger.log_message(signature, "\t+ -[test ]- ->", test_file_name)
+        with open(origin_file_name, 'r', encoding='utf8') as f:
+            samples = f.read().strip().split('\n\n')
+        train_ofs = open(train_file_name, 'w', encoding='utf8')
+        test_ofs = open(test_file_name, 'w', encoding='utf8')
+        train_count = 0
+        test_count = 0
+        total_count = 0
+        for i, sample in enumerate(samples):
+            sample = sample.replace('\r', '')
+            if i < test_start_index:
+                train_ofs.write(sample + "\n\n")
+                train_count += 1
+            else:
+                test_ofs.write(sample + "\n\n")
+                test_count += 1
+            
+            total_count += 1
+        train_ofs.close()
+        test_ofs.close()
+        self.logger.log_message(signature, "train count=", train_count)
+        self.logger.log_message(signature, "test count=", test_count)
+        self.logger.log_message(signature, "total count=", total_count)
+        self.logger.log_message(signature, "finish!")
+
+
+
     def divide_train(self, train_rate: float=0.8):
         signature = "divide_train()\t"
         origin_file_name = os.path.join(DefaultConfig.PATHS.DATA_CCF_CLEANED, "train_origin_bio.txt")
@@ -211,7 +247,7 @@ class RePreprocessor:
         self.logger.log_message(signature, "finish!")
 
 
-def quick_preproduce(max_size: int, train_rate: float=1, origin_dir: str = None, target_dir: str = None) -> LabelTrasformer:
+def quick_preproduce(max_size: int, train_rate: float=1, origin_dir: str = None, target_dir: str = None, test_start_index: int=-1) -> LabelTrasformer:
     """
     封装好的快速进行预处理的函数.
     如果不指定 max_size 或指定为None, 将不会对原始样本进行分割, 
@@ -247,7 +283,10 @@ def quick_preproduce(max_size: int, train_rate: float=1, origin_dir: str = None,
             logger.log_message("has existed")
     re_reprocessor = RePreprocessor(origin_dir=origin_dir, target_dir=target_dir)
     re_reprocessor.produce_train()
-    re_reprocessor.divide_train(train_rate)
+    if test_start_index < 0:
+        re_reprocessor.divide_train(train_rate)
+    else:
+        re_reprocessor.divide_train_by_index(test_start_index=test_start_index)
     re_reprocessor.produce_test(max_size)
     re_reprocessor.trasformer.save_to_file()
     re_reprocessor.trasformer.log_bio_type_to_file()
@@ -256,4 +295,4 @@ def quick_preproduce(max_size: int, train_rate: float=1, origin_dir: str = None,
 
 if __name__ == "__main__":
     from core.config.DefaultConfig import DefaultConfig as config
-    quick_preproduce(256 - 2, 0.8)
+    quick_preproduce(max_size=256 - 2, test_start_index=13263)

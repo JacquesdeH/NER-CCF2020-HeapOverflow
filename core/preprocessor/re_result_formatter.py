@@ -16,7 +16,7 @@ class ReResultFormatter:
         self.logger = alloc_logger(
             "re_result_formatter.log", ReResultFormatter)
         self.end = end
-        email_pattern = r"[a-zA-Z0-9_\.]+@[a-zA-Z0-9_\.]+"
+        email_pattern = r"[a-zA-Z0-9_\.]+@[a-zA-PR-Z0-9_\.]+"
         mobile_pattern = r"[\+＋]?([\(（]\d+[\)）])?\d[\-\d]*\d([转轉]\d+)?"
         QQ_pattern = r"\d{9,10}"
         date_pattern = r"([12]\d{3}\-\d{1,2}-\d{1,2})|([12]\d{3}\-[12]\d{3})"
@@ -115,6 +115,13 @@ class ReResultFormatter:
             content = m.group()
             if len(content) < 8:
                 continue
+            count = 0
+            num_list = [str(i) for i in range(10)]
+            for ch in content:
+                if ch in num_list:
+                    count += 1
+            if count > 15:
+                continue
             if self.date_re.fullmatch(content):
                 continue
             clz = "mobile"
@@ -153,7 +160,7 @@ class ReResultFormatter:
                     Category=info.Category,
                     Pos_b=new_beg,
                     Pos_e=new_end,
-                    Privacy=content
+                    Privacy=raw_content[new_beg: new_end+1]
                 ))
                 continue
             pattern = content               \
@@ -180,7 +187,7 @@ class ReResultFormatter:
                     Category=info.Category,
                     Pos_b=new_beg,
                     Pos_e=new_end,
-                    Privacy=new_content
+                    Privacy=raw_content[new_beg: new_end+1]
                 ))
                 continue
             not_in_raw_count += 1
@@ -305,6 +312,7 @@ class ReResultFormatter:
         all_content.sort(key=get_end)
         all_content.sort(key=get_beg)
         all_content.sort(key=get_id)
+        self.logger.log_message(signature, "len=0:")
         self.logger.log_message(signature, "length-1 entity count=",
                                 sum(1 for line in all_content if is_single(line)))
         # for line in all_content:
@@ -317,7 +325,8 @@ class ReResultFormatter:
         with open(os.path.join(DefaultConfig.PATHS.DATA_INFO, "predict.csv"), 'w', encoding='utf8') as f:
             f.write('ID,Category,Pos_b,Pos_e,Privacy\n')
             for content in all_content:
-                f.write(content + "\n")
+                if not is_single(content):
+                    f.write(content + "\n")
 
 
 if __name__ == "__main__":
@@ -328,7 +337,7 @@ if __name__ == "__main__":
     #    data_dir=os.path.join(DefaultConfig.PATHS.DATA_CCF_CLEANED, "train/data"))
     # formatter.trans_origin_to_raw(data_dir=os.path.join(DefaultConfig.PATHS.DATA_CCF_RAW, "train/data"))
     formatter = ReResultFormatter()
-    formatter.combine_all(result_dir=os.path.join(
-        DefaultConfig.PATHS.DATA_CCF_CLEANED, "test/label/30"))
+    formatter.combine_all(receive_rate = 0.7, result_dir=os.path.join(
+        DefaultConfig.PATHS.DATA_CCF_CLEANED, "test/label/80/30"))
     formatter.trans_origin_to_raw()
     formatter.final_format()
