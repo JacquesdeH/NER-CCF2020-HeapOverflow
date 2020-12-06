@@ -57,6 +57,10 @@ class RePreprocessor:
                 data = f.read()
 
             data, infos = self.mismatch_detector.fix_mismatch(data, infos)
+
+            if data is None or infos is None:
+                unsolve_mismatch.append(i)
+                continue
             origin_total_entity_count += len(infos)
 
             new_infos = [info for info in infos if info.Category != 'vx']
@@ -74,10 +78,6 @@ class RePreprocessor:
             new_infos = [info for info in infos if info.Category != 'QQ']
             remove_QQ_count += len(infos) - len(new_infos)
             infos = new_infos
-
-            if data is None or infos is None:
-                unsolve_mismatch.append(i)
-                continue
 
             to_remove = self.duplication_detector.auto_clean_judge(infos)
 
