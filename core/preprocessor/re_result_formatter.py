@@ -141,7 +141,7 @@ class ReResultFormatter:
         head = 0
         to_print_infos = []
         for info in infos:
-            content = info.Privacy.replace(",", '')
+            content = info.Privacy.replace(',', '').replace('\n', '')
 
             current_content = raw_content[head:].lower()
             if content in current_content:
