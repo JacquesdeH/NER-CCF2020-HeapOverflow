@@ -103,10 +103,9 @@ class ReResultFormatter:
                 Pos_e=m.end() - 1,
                 Privacy=m.group()
             ))
-        if len(ret) != 0:
-            # self.logger.log_message(signature, "[{:d}] found {:d} emails by re".format(ID, len(ret)))
-            # self.logger.log_message(ret)
-            pass
+        # if len(ret) != 0:
+        #     self.logger.log_message(signature, "[{:d}] found {:d} emails by re".format(ID, len(ret)))
+        #     self.logger.log_message(ret)
         return ret
 
     def detect_mobile_and_QQ(self, ID: int, data: str) -> "List[LabelInfo]":
@@ -128,9 +127,9 @@ class ReResultFormatter:
                 Pos_e=m.end() - 1,
                 Privacy=m.group()
             ))
-        if len(ret) != 0:
-            self.logger.log_message(signature, "[{:d}] found {:d} QQ/mobile by re".format(ID, len(ret)))
-            self.logger.log_message(ret)
+        # if len(ret) != 0:
+        #     self.logger.log_message(signature, "[{:d}] found {:d} QQ/mobile by re".format(ID, len(ret)))
+        #     self.logger.log_message(ret)
         return ret
 
     def _print_infos_to_csv_for_id(self, ID: int, infos: list, csv_ofs, data_dir: str, detect_email=True) -> (int, int, int):
@@ -142,7 +141,7 @@ class ReResultFormatter:
         head = 0
         to_print_infos = []
         for info in infos:
-            content = info.Privacy
+            content = info.Privacy.replace(",", '')
 
             current_content = raw_content[head:].lower()
             if content in current_content:
@@ -308,13 +307,13 @@ class ReResultFormatter:
         all_content.sort(key=get_id)
         self.logger.log_message(signature, "length-1 entity count=",
                                 sum(1 for line in all_content if is_single(line)))
-        for line in all_content:
-            if (is_mobile(line)):
-                self.logger.log_message(
-                    signature, "[mobiles]\t", get_content(line))
-        for line in all_content:
-            if (is_QQ(line)):
-                self.logger.log_message(signature, "[QQ]\t", get_content(line))
+        # for line in all_content:
+        #     if (is_mobile(line)):
+        #         self.logger.log_message(
+        #             signature, "[mobiles]\t", get_content(line))
+        # for line in all_content:
+        #     if (is_QQ(line)):
+        #         self.logger.log_message(signature, "[QQ]\t", get_content(line))
         with open(os.path.join(DefaultConfig.PATHS.DATA_INFO, "predict.csv"), 'w', encoding='utf8') as f:
             f.write('ID,Category,Pos_b,Pos_e,Privacy\n')
             for content in all_content:
