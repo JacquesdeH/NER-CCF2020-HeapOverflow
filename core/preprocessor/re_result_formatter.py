@@ -329,6 +329,6 @@ if __name__ == "__main__":
     # formatter.trans_origin_to_raw(data_dir=os.path.join(DefaultConfig.PATHS.DATA_CCF_RAW, "train/data"))
     formatter = ReResultFormatter()
     formatter.combine_all(result_dir=os.path.join(
-        DefaultConfig.PATHS.DATA_CCF_CLEANED, "test/label/20"))
+        DefaultConfig.PATHS.DATA_CCF_CLEANED, "test/label/30"))
     formatter.trans_origin_to_raw()
     formatter.final_format()
