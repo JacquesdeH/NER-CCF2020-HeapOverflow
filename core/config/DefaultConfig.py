@@ -22,8 +22,9 @@ class DefaultConfig:
 
     class HYPER:
         PRETRAINED = 'bert-base-chinese'
-        BATCH_SIZE = 16
-        SEQ_LEN = 128
+        BATCH_SIZE = 8
+        CUMUL_BATCH = 4
+        SEQ_LEN = 256
         EMBED_DIM = 768
         LSTM_HIDDEN = 256
         LSTM_DIRECTS = 2
@@ -31,6 +32,7 @@ class DefaultConfig:
         LABEL_DIM = 47
         EPOCH = 3
         LR = 1e-4
+        BASE_LR = 1e-6
         N = 1
         K = 4
 

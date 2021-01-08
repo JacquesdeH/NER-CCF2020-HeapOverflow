@@ -22,6 +22,8 @@ parser.add_argument('--epoch', default=config.HYPER.EPOCH)
 parser.add_argument('--lr', default=config.HYPER.LR)
 parser.add_argument('--n', default=config.HYPER.N)
 parser.add_argument('--k', default=config.HYPER.K)
+parser.add_argument('--cumul_batch', default=config.HYPER.CUMUL_BATCH)
+parser.add_argument('--base_lr', default=config.HYPER.BASE_LR)
 
 
 args = parser.parse_args()
@@ -29,9 +31,9 @@ args = parser.parse_args()
 args.device = torch.device('cuda' if args.cuda and torch.cuda.is_available() else 'cpu')
 
 if __name__ == '__main__':
-    instructor = Instructor.Instructor('Version1', args)
-    # instructor.train()
-    # instructor.save_module()
-    instructor.load_module()
-    instructor.genTestJson()
+    instructor = Instructor.Instructor('Version8', args)
+    instructor.train()
+    instructor.save_module()
+    # instructor.load_module()
+    # instructor.genTestJson()
 

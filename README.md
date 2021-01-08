@@ -4,7 +4,7 @@ CCF 2020 competition repo for ID=472
 ## Stage 1 - Midterm Check
 
 ### 赛题介绍
-  - 赛题背景及意义 Bullshit
+  - 赛题背景及意义 
   - 任务定义及目标 Formal
   - 评价指标
   - [赛题网址](https://www.datafountain.cn/competitions/472)
