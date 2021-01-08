@@ -7,6 +7,7 @@ from ..utils import alloc_logger
 from .label_transformer import BMESOLabel
 from .label_transformer import LabelType
 from .label_transformer import LabelTrasformer
+from collections import Counter
 
 
 class LabelFormatter:
@@ -85,6 +86,53 @@ class LabelFormatter:
                 lst[i] = m_sym                  # 标记名词短语的中间部分
         return lst
 
+    def bio_str_list_label_and_token_list_to_infos(self, 
+        ID: int, 
+        bio_str_list:"Iterable[str]", 
+        tokens:"Iterable[str]", 
+        receive_rate:float) -> "List[LabelIndo]":
+        ret = []
+        reading = False
+        counting = None
+        beg = 0
+        content = ""
+        for i in range(len(bio_str_list)):
+            label = bio_str_list[i]
+            token = tokens[i].replace("##", '')
+            if reading:
+                if label[0] in ('B', 'O'):
+                    counter = Counter(counting)
+                    most, times = counter.most_common(1)[0]
+                    if (times / len(counting) >= receive_rate):
+                        ret.append(LabelInfo(
+                            ID = ID,
+                            Category = most,
+                            Pos_b = beg,
+                            Pos_e = len(content) - 1,
+                            Privacy = content[beg:]
+                            ))
+                if label[0] == 'I':
+                    counting.append(label[2:])
+                if label[0] == 'O':
+                    reading = False
+            if label[0] == 'B':
+                counting = [label[2:]]
+                beg = len(content)
+                reading = True
+            content += token
+        if reading:
+            counter = Counter(counting)
+            most, times = counter.most_common(1)[0]
+            if (times / len(counting) >= receive_rate):
+                ret.append(LabelInfo(
+                    ID = ID,
+                    Category = most,
+                    Pos_b = beg,
+                    Pos_e = len(content) - 1,
+                    Privacy = content[beg:]
+                    ))
+        return ret
+
     def integer_list_label_and_data_to_infos(self, ID: int, integer_list:"Iterable[int]", data:str) -> "List[LabelIndo]":
         label_list = [None] * len(integer_list)
         ret = []
@@ -134,6 +182,21 @@ class LabelFormatter:
                 reading = False
         return ret
 
+    def infos_to_bio_str_list_label(self, infos: "Iterable[LabelInfo]", length: int) -> "List[str]":
+        lst = ["O"] * length
+        for info in infos:
+            type_name = info.Category
+            start_index = info.Pos_b
+            end_index = info.Pos_e
+
+            # 多字
+            m_sym = "I-" + type_name            # 名词短语中间的标记
+            for i in range(start_index, end_index + 1):
+                if i == start_index:
+                    lst[i] = "B-" + type_name   # 标记名词短语的开头
+                    continue
+                lst[i] = m_sym                  # 标记名词短语的中间和结尾部分
+        return lst
 
     def infos_to_str_list_label(self, infos: "Iterable[LabelInfo]", length: int) -> "List[str]":
         lst = ["O"] * length

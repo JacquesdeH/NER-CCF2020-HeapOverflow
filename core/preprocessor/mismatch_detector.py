@@ -38,8 +38,22 @@ class MismatchDetector:
     # def __del__(self):
     #    self.save()
 
-    def fix_mismatch(self, data:str, infos:"Iterable[LabelInfo]") -> (str, "List[LabelInfo]"):
-        new_data = data.replace('\n', '')
+    @staticmethod
+    def remove_special_char(data: str)->str:
+        return data                 \
+            .replace('\n', '')      \
+            .replace('\r', '')      \
+            .replace(' ', '')       \
+            .replace('\b', '')      \
+            .replace('\v', '')      \
+            .replace('\f', '')      \
+            .replace('\u2028', '')  \
+            .replace('\u2029', '')  \
+            .replace('\u20A0', '')  \
+            .replace('\uFEFF', '')
+
+    def fix_mismatch(self, data:str, infos:"Iterable[LabelInfo]", remove_spacial=True) -> (str, "List[LabelInfo]"):
+        new_data = self.remove_special_char(data) if remove_spacial else data
         reader = self.reader
         for no, info in enumerate(infos):
             if new_data[info.Pos_b : info.Pos_e + 1] != info.Privacy:

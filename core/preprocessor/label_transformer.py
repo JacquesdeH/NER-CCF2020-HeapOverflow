@@ -33,6 +33,20 @@ class LabelTrasformer:
             self.label_index[label] = idx
             self.logger.log_message(idx, "\t:\t", self.label_to_string(label))
 
+    def log_bio_type_to_file(self):
+        table_file_name = os.path.join(DefaultConfig.PATHS.DATA_INFO, "bio_table.json")
+
+        save_label_table = []
+        s = set()
+        for label in self.label_table:
+            bio_string = self.label_to_bio_string(label)
+            if bio_string not in s:
+                s.add(bio_string)
+                save_label_table.append(bio_string)
+
+        with open(table_file_name, 'w', encoding='utf8') as f:
+            json.dump(save_label_table, f)
+            self.logger.log_message("save bio label table in file [", table_file_name, ']')
 
     def save_to_file(self):
         map_file_name = os.path.join(DefaultConfig.PATHS.DATA_INFO, "trans_map.json")
@@ -81,6 +95,18 @@ class LabelTrasformer:
     
     def integer_to_label(self, integer: int) -> BMESOLabel:
         return self.label_table[integer]
+
+    def label_to_bio_string(self, label: BMESOLabel) -> str:
+        if label.type is LabelType.O:
+            return "O"
+        tp = label.type
+        if tp == LabelType.M or tp == LabelType.E:
+            tp = "I"
+        elif tp == LabelType.S:
+            tp = "B"
+        else:
+            tp = tp.name
+        return tp + '-' + label.name
 
     def label_to_string(self, label: BMESOLabel) -> str:
         if label.type is LabelType.O:

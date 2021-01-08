@@ -44,6 +44,8 @@ class LabelFileReader:
         for row, line_content in enumerate(fp.readlines()):
             if row == 0:
                 continue
+            if len(line_content) == 0 or line_content == '\n':
+                continue
             new_info = self.loads(line_content)
             if new_info is not None:
                 ret.append(new_info)
