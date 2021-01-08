@@ -1,0 +1,55 @@
+worde: WordEncoding.w2v
+ptm_model: hfl/chinese-roberta-wwm-ext
+fusion: Fusion.flat
+hidden_size: 160
+scaled: False
+en_ffd: False
+num_types: 14
+label: LabelE.Nobie
+crf_strict: True
+max_len: 140
+num_types: 14
+reshuffle: False
+en_cross: True
+fold_num: 5
+dev_rate: 0.2
+en_fgm: True
+en_swa: True
+epochs: 8
+end_epoch: 8
+batch_size: 16
+lr: {'ptm': 3e-05, 'other': 3e-05, 'crf': 0.005}
+
+
+Epoch:    1/8     ============================================================
+1/609 - ETA: xx:xx:xx - loss: 1.411532 - precise: 0.000471 - recall: 0.025000 - f1: 0.000924 - ptm: 0.000030 - other: 0.000030 - crf: 0.005000
+2/609 - ETA: 3:17 - loss: 1.427314 - precise: 0.000226 - recall: 0.013158 - f1: 0.000444 - ptm: 0.000030 - other: 0.000030 - crf: 0.005000
+3/609 - ETA: 3:08 - loss: 1.389842 - precise: 0.000157 - recall: 0.008850 - f1: 0.000308 - ptm: 0.000030 - other: 0.000030 - crf: 0.005000
+4/609 - ETA: 2:54 - loss: 1.371222 - precise: 0.000238 - recall: 0.012987 - f1: 0.000468 - ptm: 0.000030 - other: 0.000030 - crf: 0.005000
+5/609 - ETA: 2:48 - loss: 1.351018 - precise: 0.000295 - recall: 0.016304 - f1: 0.000580 - ptm: 0.000030 - other: 0.000030 - crf: 0.005000
+6/609 - ETA: 3:06 - loss: 1.325207 - precise: 0.000243 - recall: 0.012876 - f1: 0.000478 - ptm: 0.000030 - other: 0.000030 - crf: 0.005000
+7/609 - ETA: 3:17 - loss: 1.304917 - precise: 0.000217 - recall: 0.010949 - f1: 0.000425 - ptm: 0.000030 - other: 0.000030 - crf: 0.005000
+8/609 - ETA: 3:07 - loss: 1.280884 - precise: 0.000197 - recall: 0.009868 - f1: 0.000387 - ptm: 0.000030 - other: 0.000030 - crf: 0.005000
+9/609 - ETA: 3:00 - loss: 1.262926 - precise: 0.000300 - recall: 0.014837 - f1: 0.000589 - ptm: 0.000030 - other: 0.000030 - crf: 0.005000
+10/609 - ETA: 2:58 - loss: 1.242512 - precise: 0.000278 - recall: 0.013477 - f1: 0.000545 - ptm: 0.000030 - other: 0.000030 - crf: 0.005000
+11/609 - ETA: 3:01 - loss: 1.224733 - precise: 0.000260 - recall: 0.012438 - f1: 0.000509 - ptm: 0.000030 - other: 0.000030 - crf: 0.005000
+12/609 - ETA: 2:58 - loss: 1.205843 - precise: 0.000246 - recall: 0.011338 - f1: 0.000481 - ptm: 0.000030 - other: 0.000030 - crf: 0.005000
+13/609 - ETA: 3:01 - loss: 1.187717 - precise: 0.000235 - recall: 0.010288 - f1: 0.000459 - ptm: 0.000030 - other: 0.000030 - crf: 0.005000
+14/609 - ETA: 2:57 - loss: 1.170174 - precise: 0.000226 - recall: 0.009506 - f1: 0.000442 - ptm: 0.000030 - other: 0.000030 - crf: 0.005000
+15/609 - ETA: 3:01 - loss: 1.154633 - precise: 0.000218 - recall: 0.008850 - f1: 0.000425 - ptm: 0.000030 - other: 0.000030 - crf: 0.005000
+16/609 - ETA: 3:00 - loss: 1.144326 - precise: 0.000208 - recall: 0.008333 - f1: 0.000407 - ptm: 0.000030 - other: 0.000030 - crf: 0.005000
+17/609 - ETA: 3:05 - loss: 1.127521 - precise: 0.000204 - recall: 0.007937 - f1: 0.000397 - ptm: 0.000030 - other: 0.000030 - crf: 0.005000
+18/609 - ETA: 3:05 - loss: 1.112302 - precise: 0.000199 - recall: 0.007463 - f1: 0.000388 - ptm: 0.000030 - other: 0.000030 - crf: 0.005000
+19/609 - ETA: 3:05 - loss: 1.095059 - precise: 0.000196 - recall: 0.006925 - f1: 0.000381 - ptm: 0.000030 - other: 0.000030 - crf: 0.005000
+20/609 - ETA: 3:06 - loss: 1.081055 - precise: 0.000231 - recall: 0.007843 - f1: 0.000449 - ptm: 0.000030 - other: 0.000030 - crf: 0.005000
+21/609 - ETA: 3:03 - loss: 1.065851 - precise: 0.000228 - recall: 0.007426 - f1: 0.000443 - ptm: 0.000030 - other: 0.000030 - crf: 0.005000
+22/609 - ETA: 3:02 - loss: 1.050275 - precise: 0.000226 - recall: 0.007084 - f1: 0.000437 - ptm: 0.000030 - other: 0.000030 - crf: 0.005000
+23/609 - ETA: 3:01 - loss: 1.035156 - precise: 0.000224 - recall: 0.006780 - f1: 0.000433 - ptm: 0.000030 - other: 0.000030 - crf: 0.005000
+24/609 - ETA: 3:01 - loss: 1.020730 - precise: 0.000222 - recall: 0.006529 - f1: 0.000430 - ptm: 0.000030 - other: 0.000030 - crf: 0.005000
+25/609 - ETA: 3:00 - loss: 1.006300 - precise: 0.000221 - recall: 0.006336 - f1: 0.000427 - ptm: 0.000030 - other: 0.000030 - crf: 0.005000
+26/609 - ETA: 2:59 - loss: 0.992681 - precise: 0.000220 - recall: 0.006098 - f1: 0.000424 - ptm: 0.000030 - other: 0.000030 - crf: 0.005000
+27/609 - ETA: 3:02 - loss: 0.979954 - precise: 0.000218 - recall: 0.005747 - f1: 0.000420 - ptm: 0.000030 - other: 0.000030 - crf: 0.005000
+28/609 - ETA: 3:00 - loss: 0.967415 - precise: 0.000217 - recall: 0.005561 - f1: 0.000418 - ptm: 0.000030 - other: 0.000030 - crf: 0.005000
+29/609 - ETA: 2:59 - loss: 0.953802 - precise: 0.000217 - recall: 0.005333 - f1: 0.000416 - ptm: 0.000030 - other: 0.000030 - crf: 0.005000
+30/609 - ETA: 2:59 - loss: 0.941384 - precise: 0.000216 - recall: 0.005137 - f1: 0.000414 - ptm: 0.000030 - other: 0.000030 - crf: 0.005000
+31/609 - ETA: 2:57 - loss: 0.928532 - precise: 0.000215 - recall: 0.004996 - f1: 0.000413 - ptm: 0.000030 - other: 0.000030 - crf: 0.005000

@@ -1,0 +1,21 @@
+worde: WordEncoding.w2v
+ptm_model: hfl/chinese-roberta-wwm-ext
+fusion: Fusion.flat
+hidden_size: 160
+scaled: False
+en_ffd: False
+num_types: 14
+label: LabelE.Nobie
+crf_strict: True
+max_len: 140
+num_types: 14
+reshuffle: False
+en_cross: True
+fold_num: 5
+dev_rate: 0.2
+en_fgm: True
+en_swa: True
+epochs: 8
+end_epoch: 8
+batch_size: 16
+lr: {'ptm': 3e-05, 'other': 3e-05, 'crf': 0.005}
